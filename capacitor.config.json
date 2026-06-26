@@ -1,0 +1,10 @@
+{
+  "appId": "com.echoai.musicsnap",
+  "appName": "Music Snap",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}
