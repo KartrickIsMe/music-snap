@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Music Snap</string>
+    <string name="title_activity_main">Music Snap</string>
+    <string name="package_name">com.echoai.musicsnap</string>
+    <string name="custom_url_scheme">com.echoai.musicsnap</string>
+</resources>
