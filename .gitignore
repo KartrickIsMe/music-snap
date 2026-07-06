@@ -36,3 +36,7 @@ google-services.json
 node_modules/
 
 *.sh
+.vscode/
+android/app/.project
+android/app/.settings/
+
