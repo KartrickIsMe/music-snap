@@ -23,6 +23,7 @@ android {
         }
     }
 }
+jn
 
 repositories {
     flatDir{

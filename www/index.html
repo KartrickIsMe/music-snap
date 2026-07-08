@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="style.css">
         <title>Audio Downloader</title>
-        <script src="script.js"></script>
     </head>
     <body>
         <input id="urlInput" placeholder="Enter the URL to download audio">
         <audio id = "audioPlayer"></audio>
-        <button id="downloadButton">Download Audio</button>
-        <button id="saveAudio">
-        <p id="status"></p>
+        <button id="loadAudio">Load Audio</button>
+        <button id="downloadAudio">Download Audio</button>
+        <button id="saveAudio">Save Audio to Music</button>
+        <p id="statusDiv">Internal Error</p>
+        <script src="app.js"></script>
     </body>
-</html>>
+</html>
