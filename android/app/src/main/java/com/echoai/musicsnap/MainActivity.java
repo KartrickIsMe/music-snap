@@ -13,20 +13,30 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        new Thread( () -> {
-            getBridge().getWebView().addJavascriptInterface(this, "Android");
-            try {
-                YoutubeDL.getInstance().init(this);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            finally {
-                getBridge().getWebView().evaluateJavascript("onInitialized()" , null);
-            }
-        }).start();
+
+        getBridge().getWebView().addJavascriptInterface(this, "Android");
     }
     @JavascriptInterface
     public void downloadToCache() {
 
+    }
+    @SuppressLint("JavascriptInterface")
+    @JavascriptInterface
+    public void onJsReady(boolean testError) {
+        if (testError) {
+            throw new RuntimeException("Test Error");
+        }
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
+            new Thread(() -> {
+                try {
+                    YoutubeDL.getInstance().init(this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+    }
+    @JavascriptInterface
+    public void exit() {
+        runOnUiThread(() -> finish());
     }
 }
