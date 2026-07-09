@@ -1,0 +1,96 @@
+/* BEWARE THIS IS VIBECODED */
+
+/* ============================================
+   1. BODY — the main flex container
+   ============================================ */
+body {
+  /* "flex" turns body into a flexbox container.
+     Every direct child of body (input, audio, button, p...)
+     becomes a "flex item" that we can now align/space easily. */
+  display: flex;
+
+  /* "column" stacks children top-to-bottom (like a vertical list).
+     Default is "row" (left-to-right), which we don't want here. */
+  flex-direction: column;
+
+  /* Centers items along the CROSS axis.
+     Since flex-direction is "column", the cross axis is horizontal —
+     so this centers everything left-to-right. */
+  align-items: center;
+
+  /* Adds space BETWEEN each flex item automatically,
+     so we don't need manual margins on every element. */
+  gap: 16px;
+
+  /* Space around the whole page content, so nothing touches the edges. */
+  padding: 32px;
+
+  /* Basic font styling for readability. */
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #222;
+}
+
+/* ============================================
+   2. INPUT FIELD
+   ============================================ */
+#urlInput {
+  width: 100%;
+  max-width: 400px; /* keeps it from stretching too wide on large screens */
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* ============================================
+   3. AUDIO PLAYER
+   ============================================ */
+#audioPlayer {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ============================================
+   4. BUTTONS
+   ============================================ */
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #4a90e2;
+  color: white;
+  cursor: pointer; /* shows a hand icon on hover, signals it's clickable */
+}
+
+/* Hover effect — slightly darker blue when mouse is over the button */
+button:hover {
+  background-color: #3a78c2;
+}
+
+/* Disabled state — greyed out and shows "not-allowed" cursor,
+   so users get clear visual feedback when a button is disabled */
+button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   5. STATUS MESSAGE
+   ============================================ */
+#statusDiv {
+  font-size: 15px;
+  text-align: center;
+}
+
+/* ============================================
+   6. EXIT AREA (hidden by default via JS, styled here for when it shows)
+   ============================================ */
+
+
+/* Make the EXIT button stand out as more urgent/destructive (red) */
+#exitB {
+  background-color: #d32f2f;
+}
+

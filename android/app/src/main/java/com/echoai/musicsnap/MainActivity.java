@@ -26,10 +26,10 @@ public class MainActivity extends BridgeActivity {
         if (testError) {
             throw new RuntimeException("Test Error");
         }
-        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
             new Thread(() -> {
                 try {
                     YoutubeDL.getInstance().init(this);
+                    runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
