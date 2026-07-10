@@ -1,6 +1,7 @@
 window.addEventListener("error" , onJsError);
 
 //don't enable for production!
+let testModeCanBeEnabled = true;
 let testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
 //it's for testing interface in browser.
@@ -13,8 +14,13 @@ const saveAudio = document.getElementById("saveAudio");
 const downloadAudio = document.getElementById("downloadAudio");
 const exitArea = document.getElementById("exitP");
 const exitButton = document.getElementById("exitB");
-const testModeToggle = document.getElementById("testModeToggle");
+const testModeEnable = document.getElementById("testModeEnable");
+const reloadButton = document.getElementById("reloadB");
+const testArea = document.getElementById("OR_text");
+const appInterface = document.getElementById("appInterface");
+const appBody = document.getElementById("appBody");
 exitArea.hidden = true;
+appInterface.hidden = false;
 logEventReplace("JS OK" , false);
 
 function disableAllButtons() {
@@ -26,7 +32,17 @@ disableAllButtons();
 
 function reloadPage() {
     location.reload();
-    window.Android.exit();
+}
+function exitPage() {
+    try {
+        window.Android.exit();
+    }
+    catch (e) {
+        //Do nothing.
+    }
+    finally {
+        reloadPage();
+    }
 }
 
 function exitState(state) {
@@ -34,24 +50,29 @@ function exitState(state) {
     exitArea.hidden = newState;
 }
 
+function causeErrors(isError) {
+    appBody.style.background = "#170000ff";
+        exitState(isError);
+        appInterfaceState(!isError);
+        if (isError == true) {
+            disableAllButtons();
+        }
+        else if (isError == false){
+            enableAllButtons();
+        }
+}
+
 window.onInitialized = function () {
     enableAllButtons();
     if (testMode == false) {
-            //test capacitor
-        try {
-            let pName = Capacitor.getPlatform();
-            logEvent("CAP OK", false);
-            logEvent("Platform : " + pName.toUpperCase());
-            logEvent("Powered by Capacitor: 2026 EchoAI\u2122");
-        }
-        catch(e) {
-            logEventReplace("[Capacitor] Environment is Incorrect : " + e.message, true);
-            disableAllButtons();
-            exitState(true);
-        }
+        //test capacitor
+        let pName = Capacitor.getPlatform();
+        logEvent("CAP OK", false);
+        logEvent("Platform : " + pName.toUpperCase());
+        logEvent("Powered by Capacitor: 2026 EchoAI\u2122");
     }
     else {
-        logEvent("CAP UNAVAILABLE IN TEST MODE", true);
+        logEvent("TEST MODE", true);
     }
 }
 
@@ -59,9 +80,9 @@ window.onInitialized = function () {
 function onDownloadClick(url) {
     if (testMode == false) {
         url = urlInput.value;
-        window.Android.downloadToCache();
+        window.Android.downloadToCache(url);
     }
-    else {
+    else if(testMode == true) {
        logEventReplace("TEST DOWNLOAD"); 
     }
 }
@@ -75,19 +96,26 @@ function onSaveClick() {
     }
 }
 
+function appInterfaceState (isVisible) {
+    appInterface.style.display = isVisible ? "" : "none";
+}
+
 function onJsError(e) {
     //What happens when your js or app errors out
     if (testMode == false) {
         logJsError(e);
-        exitState(true);
-        disableAllButtons();
+        if (testModeCanBeEnabled == false) {
+            testArea.hidden = true;
+        }
+        appBody.style.background = "#170000ff";
+        causeErrors(true);
     }
 }
 
-//DO NOT TOUCH
 function logJsError(e) {
-    logEventReplace(e.message, true);
+    logEvent(e.message, true);
 }
+
 //DO NOT TOUCH 
 function logEvent(event, isError) {
     let line = document.createElement("p");
@@ -99,7 +127,7 @@ function logEvent(event, isError) {
         line.style.color = "green"
     }
     else {
-        line.style.color = "black";
+        line.style.color = "white";
     }
     statusDiv.prepend(line);
 }
@@ -116,13 +144,18 @@ function enableAllButtons() {
     saveAudio.disabled = false;
 }
 
-
 function onLoadClick(nativeFilePath) {
     if(testMode == false) {
         try {
             webFilePath = Capacitor.convertFileSrc(nativeFilePath);
-            audioPlayer.src = webFilePath;
-            audioPlayer.load();
+            logEvent(webFilePath);
+            if(nativeFilePath) {
+                audioPlayer.src = webFilePath;
+                audioPlayer.load();
+            }
+            else {
+                logEventReplace("Audio not found", true);
+            }
         }
         catch(e) {
             logEventReplace(e.message, true);
@@ -132,7 +165,7 @@ function onLoadClick(nativeFilePath) {
         logEventReplace("TEST AUDIO LOADING");
         audioPlayer.src = testAudioPath;
         audioPlayer.load();
-        logEventReplace("TEST AUDIO LOADED", false);
+        logEventReplace("TEST AUDIO", false);
     }
 }
 
@@ -140,30 +173,35 @@ function wait(timeMs) {
     return new Promise();
 }
 
-function toggleTestMode() {
-    testMode = !testMode;
-    enableAllButtons();
-    exitState(false);
-    if(testMode) {
-        logEventReplace("TEST MODE ON", false);
-    }
-    else {
-        logEventReplace("TEST MODE OFF", true);
-    }
+function enableTestMode() {
+        testMode = true;
+        causeErrors(false);
+        logEventReplace("TEST MODE", false);
+        appBody.style.background = "";
 }
 
-downloadAudio.addEventListener("click", onDownloadClick);
+downloadAudio.addEventListener("click", sendToDownload);
 saveAudio.addEventListener("click", onSaveClick);
 loadAudio.addEventListener("click", onLoadClick);
-exitButton.addEventListener("click", reloadPage);
-testModeToggle.addEventListener("click", toggleTestMode);
+exitButton.addEventListener("click", exitPage);
+testModeEnable.addEventListener("click", enableTestMode);
 
-
+function sendToDownload() {
+    let url = urlInput.value;
+    onDownloadClick(url);
+}
 
 function jsIsReady() {
     //error android app out if true
     if (testMode == false) {
-        window.Android.onJsReady(false);
+        try {
+            window.Android.onJsReady(false);
+            //then android calls onInitialized()
+        }
+        catch(e) {
+            onJsError(e);
+            logEvent("Are you Android or not?");
+        }
     }
     else {
         onInitialized();

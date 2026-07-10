@@ -4,17 +4,17 @@
         <link rel="stylesheet" href="style.css">
         <title>Audio Downloader</title>
     </head>
-    <body>
-        <input id="urlInput" placeholder="Enter the URL to download audio">
-        <audio id = "audioPlayer" controls></audio>
-        <button id="loadAudio">Load Audio</button>
-        <button id="downloadAudio">Download Audio</button>
-        <button id="saveAudio">Save Audio to Music</button>
-        <button id="testModeToggle">TEST</button>
-        <p id="statusDiv">Internal Error</p>
+    <body id="appBody">
+        <div id="appInterface">
+            <input id="urlInput" placeholder="Enter the URL to download audio">
+            <audio id = "audioPlayer" controls></audio>
+            <button id="loadAudio">Load Audio</button>
+            <button id="downloadAudio">Download Audio</button>
+            <button id="saveAudio">Save Audio to Music</button>
+        </div>
+        <div id="statusDiv">Internal Error</div>
         <p id="exitP">
-            Please Restart the App....
-            <button id="exitB"> EXIT </button>
+            TRY : <button id="exitB">EXIT</button><span id = "OR_text"> OR <button id="testModeEnable">TEST</button></span> 
         </p>
         <script src="app.js"></script>
     </body>
