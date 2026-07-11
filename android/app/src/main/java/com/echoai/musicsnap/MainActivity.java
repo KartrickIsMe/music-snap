@@ -24,12 +24,13 @@ public class MainActivity extends BridgeActivity {
     String id;
     String title;
     String pid;
-    private final String loc = getCacheDir().getAbsolutePath() + "/music";
+    private String loc;
 
     @SuppressLint("JavascriptInterface")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loc = getCacheDir().getAbsolutePath() + "/music";
         runOnUiThread(() -> getBridge().getWebView().addJavascriptInterface(this, "Android"));
     }
     @JavascriptInterface
