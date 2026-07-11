@@ -82,9 +82,9 @@ public class MainActivity extends BridgeActivity {
         }
             new Thread(() -> {
                 try {
+                    androidReady();
                     logEvent("YTDL WAIT" , "warn");
                     YoutubeDL.getInstance().init(this);
-                    runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
                 } catch (YoutubeDLException e) {
                     logEvent("Error initializing YoutubeDL: " + e.getMessage() , "true");
                 } catch (Exception e) {
@@ -107,5 +107,9 @@ public class MainActivity extends BridgeActivity {
             error = isError;
         }
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("logEvent(" + safe + " , " + error + ")", null));
+    }
+    
+    void androidReady() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
     }
 }
