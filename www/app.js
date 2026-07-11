@@ -1,7 +1,7 @@
 window.addEventListener("error" , onJsError);
 
 //don't enable for production!
-let testModeCanBeEnabled = true;
+let testModeCanBeEnabled = false;
 let testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
 //it's for testing interface in browser.
@@ -21,6 +21,26 @@ const appInterface = document.getElementById("appInterface");
 const appBody = document.getElementById("appBody");
 exitArea.hidden = true;
 appInterface.hidden = false;
+
+//DO NOT TOUCH 
+window.logEvent = function (event, isError) {
+    let line = document.createElement("p");
+    line.textContent = event;
+    if (isError == true) {
+        line.style.color = "red";
+    }
+    else if (isError == false) {
+        line.style.color = "green"
+    }
+    else if (isError === "warn") {
+        line.style.color = "yellow";
+    }
+    else {
+        line.style.color = "white";
+    }
+    statusDiv.prepend(line);
+}
+
 logEventReplace("JS OK" , false);
 
 function disableAllButtons() {
@@ -38,7 +58,7 @@ function exitPage() {
         window.Android.exit();
     }
     catch (e) {
-        //Do nothing.
+        //Do nothing, its for browser.
     }
     finally {
         reloadPage();
@@ -79,7 +99,6 @@ window.onInitialized = function () {
 
 function onDownloadClick(url) {
     if (testMode == false) {
-        url = urlInput.value;
         window.Android.downloadToCache(url);
     }
     else if(testMode == true) {
@@ -116,21 +135,6 @@ function logJsError(e) {
     logEvent(e.message, true);
 }
 
-//DO NOT TOUCH 
-function logEvent(event, isError) {
-    let line = document.createElement("p");
-    line.textContent = event;
-    if (isError == true) {
-        line.style.color = "red";
-    }
-    else if (isError == false) {
-        line.style.color = "green"
-    }
-    else {
-        line.style.color = "white";
-    }
-    statusDiv.prepend(line);
-}
 
 //DO NOT TOUCH
 function logEventReplace(event, isError) {
@@ -200,7 +204,7 @@ function jsIsReady() {
         }
         catch(e) {
             onJsError(e);
-            logEvent("Are you Android or not?");
+            logEvent("Are you Android or not?", "warn");
         }
     }
     else {
