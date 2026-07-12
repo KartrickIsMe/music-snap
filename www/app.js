@@ -1,10 +1,12 @@
 window.addEventListener("error" , onJsError);
 
 //don't enable for production!
-let testModeCanBeEnabled = false;
+let testModeCanBeEnabled = true;
 let testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
 //it's for testing interface in browser.
+
+let extention = "bestaudio[ext!=webm]/bestaudio";
 
 const urlInput = document.getElementById("urlInput");
 const audioPlayer = document.getElementById("audioPlayer");
@@ -21,7 +23,7 @@ const appInterface = document.getElementById("appInterface");
 const appBody = document.getElementById("appBody");
 exitArea.hidden = true;
 appInterface.hidden = false;
-
+audioPlayer.style.display = "none";
 //DO NOT TOUCH 
 window.logEvent = function (event, isError) {
     let line = document.createElement("p");
@@ -99,7 +101,7 @@ window.onInitialized = function () {
 
 function onDownloadClick(url) {
     if (testMode == false) {
-        window.Android.downloadToCache(url);
+        window.Android.downloadToCache(url, extention);
     }
     else if(testMode == true) {
        logEventReplace("TEST DOWNLOAD"); 
@@ -148,7 +150,9 @@ function enableAllButtons() {
     saveAudio.disabled = false;
 }
 
-function onLoadClick(nativeFilePath) {
+//aka audio player, android callable
+window.onLoadClick = function (nativeFilePath) {
+    audioPlayer.style.display = "";
     if(testMode == false) {
         try {
             webFilePath = Capacitor.convertFileSrc(nativeFilePath);
@@ -166,7 +170,6 @@ function onLoadClick(nativeFilePath) {
         }
     }
     else {
-        logEventReplace("TEST AUDIO LOADING");
         audioPlayer.src = testAudioPath;
         audioPlayer.load();
         logEventReplace("TEST AUDIO", false);
