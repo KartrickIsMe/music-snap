@@ -218,6 +218,6 @@ public class MainActivity extends BridgeActivity {
     }
 
     void causeErrors(boolean isError) {
-        runOnUiThread(() -> getBridge().getWebView().evaluateJavaScript("causeErrors("+ isError  +")", null));
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("causeErrors("+ isError  +")", null));
     }
 }
