@@ -83,7 +83,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.downloadAudio:disabled {
+#downloadAudio:disabled {
   background: #2d1010;
   color: #635d5d;
   cursor: not-allowed;
