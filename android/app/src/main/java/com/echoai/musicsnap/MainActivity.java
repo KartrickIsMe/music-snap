@@ -174,10 +174,12 @@ public class MainActivity extends BridgeActivity {
                 } catch (YoutubeDLException e) {
                     //print the cause
                     logEvent("YTDL FAIL : " + e.getMessage() , "true");
+                    causeErrors(true);
                     return;
                 } catch (Exception e) {
                     //print the cause
                     logEvent("JAVA ERROR : " + e.getMessage(), "true");
+                    causeErrors(true);
                     return;
                 }
                     //once it's done we log
@@ -214,4 +216,8 @@ public class MainActivity extends BridgeActivity {
         //initialize frontend ui when this method is called
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
     }
+}
+
+void causeErrors(boolean isError) {
+    runOnUiThread(() -> getBridge().getWebView().evaluateJavaScript("causeErrors("+ isError  +")", null));
 }
