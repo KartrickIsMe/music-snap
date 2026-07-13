@@ -240,6 +240,7 @@ window.downloadState = function(state) {
 }
 
 function cancelDownload() {
+    downloadAudio.style.backgroundColor = "";
     downloadAudio.disabled = true;
     window.Android.abortDownload();
 }
