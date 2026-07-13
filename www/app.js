@@ -7,6 +7,8 @@ const testAudioPath = "./testMode/audio.mp3";
 //it's for testing interface in browser.
 
 let extention = "bestaudio[ext!=webm]/bestaudio";
+let defaultDownloadText = "Download Audio";
+let downloadAudioCanBeEnabled = false;
 
 const urlInput = document.getElementById("urlInput");
 const audioPlayer = document.getElementById("audioPlayer");
@@ -24,6 +26,7 @@ const appBody = document.getElementById("appBody");
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
+
 //DO NOT TOUCH 
 window.logEvent = function (event, isError) {
     let line = document.createElement("p");
@@ -47,6 +50,7 @@ logEventReplace("JS OK" , false);
 
 function disableAllButtons() {
     downloadAudio.disabled = true;
+    downloadAudioCanBeEnabled = false;
     loadAudio.disabled = true;
     saveAudio.disabled = true;
 }
@@ -74,6 +78,9 @@ function exitState(state) {
 
 function causeErrors(isError) {
     appBody.style.background = "#170000ff";
+        if (testModeCanBeEnabled == false) {
+            testArea.hidden = true;
+        }
         exitState(isError);
         appInterfaceState(!isError);
         if (isError == true) {
@@ -125,9 +132,6 @@ function onJsError(e) {
     //What happens when your js or app errors out
     if (testMode == false) {
         logJsError(e);
-        if (testModeCanBeEnabled == false) {
-            testArea.hidden = true;
-        }
         appBody.style.background = "#170000ff";
         causeErrors(true);
     }
@@ -146,6 +150,7 @@ function logEventReplace(event, isError) {
 
 function enableAllButtons() {
     downloadAudio.disabled = false;
+    downloadAudioCanBeEnabled = true;
     loadAudio.disabled = false;
     saveAudio.disabled = false;
 }
@@ -188,6 +193,7 @@ function enableTestMode() {
 }
 
 downloadAudio.addEventListener("click", sendToDownload);
+downloadAudio.textContent = defaultDownloadText;
 saveAudio.addEventListener("click", onSaveClick);
 loadAudio.addEventListener("click", onLoadClick);
 exitButton.addEventListener("click", exitPage);
@@ -213,6 +219,29 @@ function jsIsReady() {
     else {
         onInitialized();
     }
+}
+
+window.downloadState = function(state) {
+    if(state === "LOCK") {
+        downloadAudio.removeEventListener("click", sendToDownload);
+        downloadAudio.addEventListener("click", cancelDownload);
+        downloadAudio.style.backgroundColor = "red";
+        downloadAudio.textContent = "Cancel Download";
+    }
+    else if(state === "UNLOCK") {
+        downloadAudio.style.backgroundColor = "";
+        downloadAudio.textContent = defaultDownloadText;
+        downloadAudio.removeEventListener("click", cancelDownload);
+        downloadAudio.addEventListener("click", sendToDownload);
+        if(downloadAudioCanBeEnabled == true) {
+            downloadAudio.disabled = false;
+        }
+    }
+}
+
+function cancelDownload() {
+    downloadAudio.disabled = true;
+    window.Android.abortDownload();
 }
 
 jsIsReady();

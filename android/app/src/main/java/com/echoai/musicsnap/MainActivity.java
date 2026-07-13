@@ -16,6 +16,7 @@ import android.os.Bundle;
 import java.io.File;
 //import java.io.IOException;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 //heart of media download
 import com.yausername.youtubedl_android.YoutubeDL;
 //handle exceptions caused by this library
@@ -42,9 +43,12 @@ public class MainActivity extends BridgeActivity {
     //store title of media
     String title;
     //store process ID of media
-    String pid;
+    String pid = "YT-" + System.currentTimeMillis();
     //store download location of media
     private String loc;
+    public boolean isDownloading = false;
+    //download related
+    AtomicBoolean shouldStop = new AtomicBoolean();
 
     //suppress js errors in ide
     @SuppressLint("JavascriptInterface")
@@ -65,26 +69,32 @@ public class MainActivity extends BridgeActivity {
     //download and save the media to music folder inside app cache
     public void downloadToCache(String url, String format) {
         //do not except an empty url
-        if(url == null || url.isEmpty()) {
+        if(url == null || url.isEmpty() || isDownloading) {
             logEvent("Empty URL" , "warn");
             return;
         }
+        shouldStop.set(false);
+        download(STATE.LOCK);
+        isDownloading = true;
         //this thing loves to touch network and haywire your phone(app not responding)
         //so run it on a new thread
         new Thread(() -> {
             try {
                 //log the url
                 logEvent("URL IS : " + url, "false");
-
                 //create the music directory if it does not exist
                 File cacheDir = new File(loc);
                 boolean isDirectoryPresent = cacheDir.mkdirs();
                 //log internally if it was present
                 System.out.println("MKDIRS : " + isDirectoryPresent);
-
                 //get information about the video to be downloaded and log it
                 logEvent("FETCHING INFO..." , "warn");
                 getMediaInfo(url, format);
+                if(shouldStop.get()) {
+                    logEvent("DOWNLOAD CANCELLED", "warn");
+                    return;
+                }
+
                 logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
 
                 //create a primary request especially for downloading
@@ -114,16 +124,23 @@ public class MainActivity extends BridgeActivity {
                 return;
             }
             catch (YoutubeDL.CanceledException e) {
-                logEvent("DOWNLOAD CANCELLED : " + e.getMessage(), "warn");
+                logEvent("DOWNLOAD CANCELLED", "warn");
                 return;
             }
             /*catch (IOException e) {
-                logEvent("IO Error : " + e.getMessage(), "true");
+                logEvent("IO ERROR : " + e.getMessage(), "true");
+                causeErrors();
                 return;
             }*/
             catch (Exception e) {
                 logEvent("JAVA ERROR : " + e.getMessage(), "true");
+                causeErrors();
                 return;
+            }
+            finally{
+                download(STATE.UNLOCK);
+                isDownloading = false;
+                shouldStop.set(false);
             }
             logEvent("DOWNLOAD SUCCESSFUL" , "false");
             callJsAudio(loc + "/" + id + "." + ext);
@@ -174,12 +191,12 @@ public class MainActivity extends BridgeActivity {
                 } catch (YoutubeDLException e) {
                     //print the cause
                     logEvent("YTDL FAIL : " + e.getMessage() , "true");
-                    causeErrors(true);
+                    causeErrors();
                     return;
                 } catch (Exception e) {
                     //print the cause
                     logEvent("JAVA ERROR : " + e.getMessage(), "true");
-                    causeErrors(true);
+                    causeErrors();
                     return;
                 }
                     //once it's done we log
@@ -217,7 +234,32 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
     }
 
-    void causeErrors(boolean isError) {
-        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("causeErrors("+ isError  +")", null));
+    void causeErrors() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("causeErrors("+ true  +")", null));
+    }
+
+    public enum STATE  {LOCK , UNLOCK}
+    void download(STATE state) {
+        String safe;
+        if(state == STATE.LOCK) {
+            safe = JSONObject.quote("LOCK");
+        }
+        else {
+            safe = JSONObject.quote("UNLOCK");
+        }
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadState("+ safe +")", null));
+    }
+
+    @JavascriptInterface
+    public void abortDownload() {
+        try {
+            YoutubeDL.getInstance().destroyProcessById(pid);
+            shouldStop.set(true);
+            logEvent("TRYING TO CANCEL DOWNLOAD...", "warn");
+
+        }
+        catch (Exception e) {
+            logEvent("CANCELLATION FAILED", "true");
+        }
     }
 }
