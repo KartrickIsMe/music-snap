@@ -216,8 +216,8 @@ public class MainActivity extends BridgeActivity {
         //initialize frontend ui when this method is called
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onInitialized()" , null));
     }
-}
 
-void causeErrors(boolean isError) {
-    runOnUiThread(() -> getBridge().getWebView().evaluateJavaScript("causeErrors("+ isError  +")", null));
+    void causeErrors(boolean isError) {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavaScript("causeErrors("+ isError  +")", null));
+    }
 }
