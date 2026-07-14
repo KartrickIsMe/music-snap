@@ -8,7 +8,7 @@ const testAudioPath = "./testMode/audio.mp3";
 
 let extention = "bestaudio[ext!=webm]/bestaudio";
 let defaultDownloadText = "Download Audio";
-let downloadAudioCanBeEnabled = false;
+//let downloadAudioCanBeEnabled = false;
 
 const urlInput = document.getElementById("urlInput");
 const audioPlayer = document.getElementById("audioPlayer");
@@ -26,6 +26,16 @@ const appBody = document.getElementById("appBody");
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
+
+const appState = {
+    hasError: false,
+    isDownloading: false,
+}
+
+function render() {
+    downloadAudio.disabled = appState.hasError || appState.isDownloading;
+    saveAudio.disabled = appState.hasError;
+}
 
 //DO NOT TOUCH 
 window.logEvent = function (event, isError) {
@@ -48,6 +58,7 @@ window.logEvent = function (event, isError) {
 
 logEventReplace("JS OK" , false);
 
+/*
 function disableAllButtons() {
     downloadAudio.disabled = true;
     downloadAudioCanBeEnabled = false;
@@ -55,10 +66,14 @@ function disableAllButtons() {
     saveAudio.disabled = true;
 }
 disableAllButtons();
+*/
+appState.hasError = true;
+render();
 
 function reloadPage() {
     location.reload();
 }
+
 function exitPage() {
     try {
         window.Android.exit();
@@ -83,16 +98,13 @@ function causeErrors(isError) {
         }
         exitState(isError);
         appInterfaceState(!isError);
-        if (isError == true) {
-            disableAllButtons();
-        }
-        else if (isError == false){
-            enableAllButtons();
-        }
+        appState.hasError = isError;
+        render();
 }
 
 window.onInitialized = function () {
-    enableAllButtons();
+    appState.hasError = false;
+    render();
     if (testMode == false) {
         //test capacitor
         let pName = Capacitor.getPlatform();
@@ -148,12 +160,14 @@ function logEventReplace(event, isError) {
     logEvent(event, isError);
 }
 
+/*
 function enableAllButtons() {
     downloadAudio.disabled = false;
     downloadAudioCanBeEnabled = true;
     loadAudio.disabled = false;
     saveAudio.disabled = false;
 }
+*/
 
 //aka audio player, android callable
 window.onLoadClick = function (nativeFilePath) {
@@ -181,9 +195,11 @@ window.onLoadClick = function (nativeFilePath) {
     }
 }
 
+/*
 function wait(timeMs) {
     return new Promise();
 }
+*/
 
 function enableTestMode() {
         testMode = true;
@@ -233,15 +249,21 @@ window.downloadState = function(state) {
         downloadAudio.textContent = defaultDownloadText;
         downloadAudio.removeEventListener("click", cancelDownload);
         downloadAudio.addEventListener("click", sendToDownload);
+        /*
         if(downloadAudioCanBeEnabled == true) {
             downloadAudio.disabled = false;
         }
+        */
+       appState.isDownloading = false;
+       render();
     }
 }
 
 function cancelDownload() {
     downloadAudio.style.backgroundColor = "";
-    downloadAudio.disabled = true;
+    appState.isDownloading = true;
+    render();
+    //downloadAudio.disabled = true;
     window.Android.abortDownload();
 }
 

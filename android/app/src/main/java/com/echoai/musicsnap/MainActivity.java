@@ -26,8 +26,9 @@ import com.yausername.youtubedl_android.YoutubeDLRequest;
 //receive the response from external sources
 import com.yausername.youtubedl_android.YoutubeDLResponse;
 //get information about the media to be downloaded
-import com.yausername.youtubedl_android.mapper.VideoInfo;
+//import com.yausername.youtubedl_android.mapper.VideoInfo;
 //quote the strings for JavaScript
+import org.json.JSONException;
 import org.json.JSONObject;
 
 //a function of the library returns this
@@ -68,6 +69,7 @@ public class MainActivity extends BridgeActivity {
     @JavascriptInterface
     //download and save the media to music folder inside app cache
     public void downloadToCache(String url, String format) {
+        //WORKING VERSION
         //do not except an empty url
         if(url == null || url.isEmpty() || isDownloading) {
             logEvent("Empty URL" , "warn");
@@ -89,9 +91,24 @@ public class MainActivity extends BridgeActivity {
                 System.out.println("MKDIRS : " + isDirectoryPresent);
                 //get information about the video to be downloaded and log it
                 logEvent("FETCHING INFO..." , "warn");
-                getMediaInfo(url, format);
+                //getMediaInfo(url, format);
+
+                //create a request for getting info about media
+                YoutubeDLRequest request2 = new YoutubeDLRequest(url);
+                //get info about the media with these args
+                request2.addOption("-f", format);
+                request2.addOption("--dump-json");
+                YoutubeDLResponse response2 = YoutubeDL.getInstance().execute(request2, pid);
+                JSONObject json = new JSONObject(response2.getOut());
+                //create a VideoInfo object
+                //assign the values to the identifiers
+                title = json.getString("title");
+                ext = json.getString("ext");
+                id = json.getString("id");
+                pid = "YT-" + System.currentTimeMillis();
+
                 if(shouldStop.get()) {
-                    logEvent("DOWNLOAD CANCELLED", "warn");
+                    logEvent("DOWNLOAD CANCELLED1", "warn");
                     return;
                 }
 
@@ -115,7 +132,8 @@ public class MainActivity extends BridgeActivity {
                     return Unit.INSTANCE;
                 });
                 System.out.println(response.getOut());
-            } catch (YoutubeDLException e) {
+            }
+            catch (YoutubeDLException e) {
                 logEvent("ERROR GETTING INFO : " + e.getMessage(), "true");
                 return;
             }
@@ -126,6 +144,9 @@ public class MainActivity extends BridgeActivity {
             catch (YoutubeDL.CanceledException e) {
                 logEvent("DOWNLOAD CANCELLED", "warn");
                 return;
+            }
+            catch (JSONException e) {
+                logEvent("INVALID JSON INPUT : " + e.getMessage(), "true");
             }
             /*catch (IOException e) {
                 logEvent("IO ERROR : " + e.getMessage(), "true");
@@ -151,20 +172,6 @@ public class MainActivity extends BridgeActivity {
     public void callJsAudio(String fileLoc) {
         String safeFileLoc = JSONObject.quote(fileLoc);
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onLoadClick("+ safeFileLoc +")", null));
-    }
-
-    public void getMediaInfo(String url, String format) throws YoutubeDLException, InterruptedException, YoutubeDL.CanceledException {
-        //create a request for getting info about media
-        YoutubeDLRequest request2 = new YoutubeDLRequest(url);
-        //get info about the media with these args
-        request2.addOption("-f", format);
-        //create a VideoInfo object
-        VideoInfo info = YoutubeDL.getInstance().getInfo(request2);
-        //assign the values to the identifiers
-        title = info.getTitle();
-        ext = info.getExt();
-        id = info.getId();
-        pid = "YT-" + System.currentTimeMillis();
     }
 
     //After the frontend has loaded.
@@ -253,9 +260,12 @@ public class MainActivity extends BridgeActivity {
     @JavascriptInterface
     public void abortDownload() {
         try {
-            YoutubeDL.getInstance().destroyProcessById(pid);
-            shouldStop.set(true);
-            logEvent("TRYING TO CANCEL DOWNLOAD...", "warn");
+            runOnUiThread(() -> {
+                logEvent("TRYING TO CANCEL DOWNLOAD...", "warn");
+                
+                YoutubeDL.getInstance().destroyProcessById(pid);
+                shouldStop.set(true);
+            });
 
         }
         catch (Exception e) {
