@@ -8,7 +8,7 @@ const appState = {
 
 //don't enable for production!
 let testModeCanBeEnabled = true;
-appState.testMode = true;
+appState.testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
 //it's for testing interface in browser.
 
@@ -34,10 +34,14 @@ appInterface.hidden = false;
 audioPlayer.style.display = "none";
 
 function render() {
-    downloadAudio.disabled = appState.hasError || appState.isDownloading;
+    downloadAudio.disabled = appState.hasError;
     saveAudio.disabled = appState.hasError;
     loadAudio.hidden = !appState.testMode;
     testMode = appState.testMode;
+    if(appState.isDownloading) {
+        downloadAudio.style.backgroundColor = "#FF474C";
+        downloadAudio.textContent = "Cancel Download";
+    }
 }
 
 //DO NOT TOUCH 
@@ -45,10 +49,10 @@ window.logEvent = function (event, isError) {
     let line = document.createElement("p");
     line.textContent = event;
     if (isError == true) {
-        line.style.color = "red";
+        line.style.color = "#FF474C";
     }
     else if (isError == false) {
-        line.style.color = "green"
+        line.style.color = "lightgreen"
     }
     else if (isError === "warn") {
         line.style.color = "yellow";
@@ -246,8 +250,7 @@ window.downloadState = function(state) {
     if(state === "LOCK") {
         downloadAudio.removeEventListener("click", sendToDownload);
         downloadAudio.addEventListener("click", cancelDownload);
-        downloadAudio.style.backgroundColor = "red";
-        downloadAudio.textContent = "Cancel Download";
+        appState.isDownloading = true;
     }
     else if(state === "UNLOCK") {
         downloadAudio.style.backgroundColor = "";
@@ -260,14 +263,18 @@ window.downloadState = function(state) {
         }
         */
        appState.isDownloading = false;
-       render();
     }
+    render();
 }
 
-function cancelDownload() {
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function cancelDownload() {
     downloadAudio.style.backgroundColor = "";
-    appState.isDownloading = true;
-    render();
+    downloadAudio.disabled = true;
+    await wait(5000);
     //downloadAudio.disabled = true;
     window.Android.abortDownload();
 }

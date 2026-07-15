@@ -16,6 +16,7 @@ import android.os.Bundle;
 import java.io.File;
 //import java.io.IOException;
 
+//import com.yausername.youtubedl_android.YoutubeDLUpdater;
 import java.util.concurrent.atomic.AtomicBoolean;
 //heart of media download
 import com.yausername.youtubedl_android.YoutubeDL;
@@ -33,7 +34,7 @@ import org.json.JSONObject;
 
 //a function of the library returns this
 import kotlin.Unit;
-
+import java.io.FileWriter;
 //main activity of app
 public class MainActivity extends BridgeActivity {
 
@@ -49,6 +50,8 @@ public class MainActivity extends BridgeActivity {
     private String loc;
     public boolean isDownloading = false;
     //download related
+    File infoFile;
+    String response0;
     AtomicBoolean shouldStop = new AtomicBoolean();
 
     //suppress js errors in ide
@@ -61,6 +64,7 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         //assign the location of the media to be downloaded
         loc = getCacheDir().getAbsolutePath() + "/music";
+        infoFile = new File(loc, "infoFile.json");
         //add the JavaScript bride to "this" class with the name "Android"
         runOnUiThread(() -> getBridge().getWebView().addJavascriptInterface(this, "Android"));
     }
@@ -72,7 +76,7 @@ public class MainActivity extends BridgeActivity {
         //WORKING VERSION
         //do not except an empty url
         if(url == null || url.isEmpty() || isDownloading) {
-            logEvent("Empty URL" , "warn");
+            logEvent("URL IS EMPTY" , "warn");
             return;
         }
         shouldStop.set(false);
@@ -98,18 +102,25 @@ public class MainActivity extends BridgeActivity {
                 //get info about the media with these args
                 request2.addOption("-f", format);
                 request2.addOption("--dump-json");
-                YoutubeDLResponse response2 = YoutubeDL.getInstance().execute(request2, pid);
+                YoutubeDLResponse response2 = YoutubeDL.getInstance().execute(request2, pid, (progress, eta, message) -> {
+                    //logEvent(message, "warn");
+                    return Unit.INSTANCE;
+                });
                 JSONObject json = new JSONObject(response2.getOut());
+                response0 = response2.getOut();
                 //create a VideoInfo object
                 //assign the values to the identifiers
                 title = json.getString("title");
                 ext = json.getString("ext");
                 id = json.getString("id");
                 pid = "YT-" + System.currentTimeMillis();
-
                 if(shouldStop.get()) {
                     logEvent("DOWNLOAD CANCELLED1", "warn");
                     return;
+                }
+
+                try(FileWriter infoFileWriter = new FileWriter(infoFile)) {
+                    infoFileWriter.write(response0);
                 }
 
                 logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
@@ -119,6 +130,7 @@ public class MainActivity extends BridgeActivity {
                 YoutubeDLRequest request1 = new YoutubeDLRequest(url);
                 request1.addOption("-f" ,format);
                 request1.addOption("-o", loc + "/%(id)s.%(ext)s");
+                request1.addOption("--load-info-json", infoFile.getAbsolutePath());
 
                 logEvent("DOWNLOADING..." , "warn");
                 YoutubeDLResponse response = YoutubeDL.getInstance().execute(request1, pid, (progress, eta, message) ->
@@ -127,7 +139,7 @@ public class MainActivity extends BridgeActivity {
                         logEvent(message, "warn");
                     }
                     else {
-                        logEvent(progress + "% Downloaded", "false");
+                        logEventReplace(progress + "% Downloaded", "false");
                     }
                     return Unit.INSTANCE;
                 });
@@ -162,6 +174,8 @@ public class MainActivity extends BridgeActivity {
                 download(STATE.UNLOCK);
                 isDownloading = false;
                 shouldStop.set(false);
+                boolean infoFileDeleted = infoFile.delete();
+                System.out.println("infoFile was deleted" + infoFileDeleted);
             }
             logEvent("DOWNLOAD SUCCESSFUL" , "false");
             callJsAudio(loc + "/" + id + "." + ext);
@@ -191,7 +205,22 @@ public class MainActivity extends BridgeActivity {
                     //initialize the lib like extracting python things...
                     YoutubeDL.getInstance().init(this);
                     //update yt-dlp on start
-                    YoutubeDL.getInstance().updateYoutubeDL(this, YoutubeDL.UpdateChannel._STABLE);
+                    logEvent("UPDATING BINARY", "warn");
+                    YoutubeDL.UpdateStatus status = YoutubeDL.getInstance().updateYoutubeDL(this, YoutubeDL.UpdateChannel._STABLE);
+                    switch (status) {
+                        case DONE:
+                            logEventReplace("UPDATE COMPLETE", "false");
+                            break;
+                        case ALREADY_UP_TO_DATE:
+                            logEventReplace("ALREADY UP TO DATE", "false");
+                            break;
+                        case null:
+                            logEvent("AN NULL POINTER EXCEPTION HAS OCCURRED WHEN UPDATING YT-DLP BINARY", "true");
+                            causeErrors();
+                        default:
+                            logEvent("THE DEFAULT CASE WAS NOT ADDRESSED IN CODE : " + status, "true");
+                            break;
+                    }
                     //once it is done, we tell js it's ready through a helper function
                     androidReady();
                     //if a lib or java error occurs, catch it
@@ -233,6 +262,23 @@ public class MainActivity extends BridgeActivity {
         }
         //heart of the mechanism
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("logEvent(" + safe + " , " + error + ")", null));
+    }
+
+    public void logEventReplace(String event, String isError){
+
+        //quote the event for js so it does not freak out
+        String safe = JSONObject.quote(event);
+        String error;
+        if(isError.equals("warn")){
+            //if it is "warn", we pass "warn"
+            error = JSONObject.quote(isError);
+        }
+        else {
+            //for true and false, we just pass 'true' or 'false' directly
+            error = isError;
+        }
+        //heart of the mechanism
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("logEventReplace(" + safe + " , " + error + ")", null));
     }
 
     //android calls this to send ready signal to js
