@@ -260,12 +260,9 @@ public class MainActivity extends BridgeActivity {
     @JavascriptInterface
     public void abortDownload() {
         try {
-            runOnUiThread(() -> {
                 logEvent("TRYING TO CANCEL DOWNLOAD...", "warn");
-                
                 YoutubeDL.getInstance().destroyProcessById(pid);
                 shouldStop.set(true);
-            });
 
         }
         catch (Exception e) {
