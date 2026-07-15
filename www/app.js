@@ -4,6 +4,7 @@ const appState = {
     hasError: false,
     isDownloading: false,
     testMode: false,
+    isCancel: false,
 }
 
 //don't enable for production!
@@ -34,7 +35,7 @@ appInterface.hidden = false;
 audioPlayer.style.display = "none";
 
 function render() {
-    downloadAudio.disabled = appState.hasError;
+    downloadAudio.disabled = appState.hasError || appState.isCancel;
     saveAudio.disabled = appState.hasError;
     loadAudio.hidden = !appState.testMode;
     testMode = appState.testMode;
@@ -273,7 +274,8 @@ function wait(ms) {
 
 async function cancelDownload() {
     downloadAudio.style.backgroundColor = "";
-    downloadAudio.disabled = true;
+    appState.isCancel = true;
+    render();
     await wait(5000);
     //downloadAudio.disabled = true;
     window.Android.abortDownload();
