@@ -139,6 +139,7 @@ public class MainActivity extends BridgeActivity {
                         logEvent(message, "warn");
                     }
                     else {
+                        sendDownloadProgress(String.valueOf(progress));
                         logEventReplace(progress + "% Downloaded", "false");
                     }
                     return Unit.INSTANCE;
@@ -174,6 +175,7 @@ public class MainActivity extends BridgeActivity {
                 download(STATE.UNLOCK);
                 isDownloading = false;
                 shouldStop.set(false);
+                sendOnDownloadComplete();
                 boolean infoFileDeleted = infoFile.delete();
                 System.out.println("infoFile was deleted" + infoFileDeleted);
             }
@@ -314,5 +316,14 @@ public class MainActivity extends BridgeActivity {
         catch (Exception e) {
             logEvent("CANCELLATION FAILED", "true");
         }
+    }
+
+    public void sendDownloadProgress(String progress) {
+        String safeProgress = JSONObject.quote(progress);
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadProgress(" + safeProgress + ")", null));
+    }
+
+    public void sendOnDownloadComplete() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onDownloadComplete()", null));
     }
 }

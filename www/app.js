@@ -30,6 +30,7 @@ const reloadButton = document.getElementById("reloadB");
 const testArea = document.getElementById("OR_text");
 const appInterface = document.getElementById("appInterface");
 const appBody = document.getElementById("appBody");
+const background = document.getElementById("background");
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
@@ -44,10 +45,14 @@ function render() {
         downloadAudio.textContent = "Cancelling...";
     }
     else if(appState.isDownloading) {
+        downloadAudio.removeEventListener("click", sendToDownload);
+        downloadAudio.addEventListener("click", cancelDownload);
         downloadAudio.style.backgroundColor = "#FF474C";
         downloadAudio.textContent = "Cancel Download";
     }
     else {
+        downloadAudio.removeEventListener("click", cancelDownload);
+        downloadAudio.addEventListener("click", sendToDownload);
         downloadAudio.style.backgroundColor = "";
         downloadAudio.textContent = defaultDownloadText;
     }
@@ -257,20 +262,9 @@ function jsIsReady() {
 
 window.downloadState = function(state) {
     if(state === "LOCK") {
-        downloadAudio.removeEventListener("click", sendToDownload);
-        downloadAudio.addEventListener("click", cancelDownload);
         appState.isDownloading = true;
     }
     else if(state === "UNLOCK") {
-        downloadAudio.style.backgroundColor = "";
-        downloadAudio.textContent = defaultDownloadText;
-        downloadAudio.removeEventListener("click", cancelDownload);
-        downloadAudio.addEventListener("click", sendToDownload);
-        /*
-        if(downloadAudioCanBeEnabled == true) {
-            downloadAudio.disabled = false;
-        }
-        */
        appState.isDownloading = false;
        appState.isCancel = false;
     }
@@ -284,9 +278,16 @@ function wait(ms) {
 async function cancelDownload() {
     appState.isCancel = true;
     render();
-    await wait(5000);
-    //downloadAudio.disabled = true;
+    await wait(1000);
     window.Android.abortDownload();
+}
+
+window.downloadProgress = function(progress) {
+    background.style.height = progress + "%";
+}
+
+window.onDownloadComplete = function() {
+    background.style.height = "0%";
 }
 
 jsIsReady();
