@@ -1,8 +1,14 @@
 window.addEventListener("error" , onJsError);
 
+const appState = {
+    hasError: false,
+    isDownloading: false,
+    testMode: false,
+}
+
 //don't enable for production!
 let testModeCanBeEnabled = true;
-let testMode = false;
+appState.testMode = true;
 const testAudioPath = "./testMode/audio.mp3";
 //it's for testing interface in browser.
 
@@ -27,14 +33,11 @@ exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
 
-const appState = {
-    hasError: false,
-    isDownloading: false,
-}
-
 function render() {
     downloadAudio.disabled = appState.hasError || appState.isDownloading;
     saveAudio.disabled = appState.hasError;
+    loadAudio.hidden = !appState.testMode;
+    testMode = appState.testMode;
 }
 
 //DO NOT TOUCH 
@@ -67,6 +70,7 @@ function disableAllButtons() {
 }
 disableAllButtons();
 */
+
 appState.hasError = true;
 render();
 
@@ -123,7 +127,7 @@ function onDownloadClick(url) {
         window.Android.downloadToCache(url, extention);
     }
     else if(testMode == true) {
-       logEventReplace("TEST DOWNLOAD"); 
+       logEventReplace("TEST DOWNLOAD : " + url);
     }
 }
 
@@ -202,7 +206,8 @@ function wait(timeMs) {
 */
 
 function enableTestMode() {
-        testMode = true;
+        appState.testMode = true;
+        render();
         causeErrors(false);
         logEventReplace("TEST MODE", false);
         appBody.style.background = "";
