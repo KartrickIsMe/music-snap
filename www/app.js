@@ -39,9 +39,17 @@ function render() {
     saveAudio.disabled = appState.hasError;
     loadAudio.hidden = !appState.testMode;
     testMode = appState.testMode;
-    if(appState.isDownloading) {
+    if(appState.isCancel) {
+        downloadAudio.style.backgroundColor = "";
+        downloadAudio.textContent = "Cancelling...";
+    }
+    else if(appState.isDownloading) {
         downloadAudio.style.backgroundColor = "#FF474C";
         downloadAudio.textContent = "Cancel Download";
+    }
+    else {
+        downloadAudio.style.backgroundColor = "";
+        downloadAudio.textContent = defaultDownloadText;
     }
 }
 
@@ -273,7 +281,6 @@ function wait(ms) {
 }
 
 async function cancelDownload() {
-    downloadAudio.style.backgroundColor = "";
     appState.isCancel = true;
     render();
     await wait(5000);
