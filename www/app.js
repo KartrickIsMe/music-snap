@@ -272,6 +272,7 @@ window.downloadState = function(state) {
         }
         */
        appState.isDownloading = false;
+       appState.isCancel = false;
     }
     render();
 }
