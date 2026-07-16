@@ -7,6 +7,7 @@ import com.getcapacitor.BridgeActivity;
 //suppress Js method errors in ide as they are not here
 import android.annotation.SuppressLint;
 //allow js to execute functions with this annotation
+import android.net.Uri;
 import android.webkit.JavascriptInterface;
 //preserve state of application e.g. when screen is rotated
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import java.io.File;
 //import java.io.IOException;
 
 //import com.yausername.youtubedl_android.YoutubeDLUpdater;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 //heart of media download
 import com.yausername.youtubedl_android.YoutubeDL;
@@ -96,55 +98,69 @@ public class MainActivity extends BridgeActivity {
                 //get information about the video to be downloaded and log it
                 logEvent("FETCHING INFO..." , "warn");
                 //getMediaInfo(url, format);
+                String TVClients = "youtube:player_client=android,default,tv";
+                Uri urlParser = Uri.parse(url);
+                String vList = urlParser.getQueryParameter("list");
+                String vId = urlParser.getQueryParameter("v");
+                String vPath = urlParser.getPath();
+                logEvent(vPath + " " + vId + " " + vList, "verbose");
+                //boolean isPlaylist = "/playlist".equals(vPath) || (vId == null && vList == null);
 
-                //create a request for getting info about media
-                YoutubeDLRequest request2 = new YoutubeDLRequest(url);
-                //get info about the media with these args
-                request2.addOption("-f", format);
-                request2.addOption("--dump-json");
-                YoutubeDLResponse response2 = YoutubeDL.getInstance().execute(request2, pid, (progress, eta, message) -> {
-                    //logEvent(message, "warn");
-                    return Unit.INSTANCE;
-                });
-                JSONObject json = new JSONObject(response2.getOut());
-                response0 = response2.getOut();
-                //create a VideoInfo object
-                //assign the values to the identifiers
-                title = json.getString("title");
-                ext = json.getString("ext");
-                id = json.getString("id");
-                pid = "YT-" + System.currentTimeMillis();
-                if(shouldStop.get()) {
-                    logEvent("DOWNLOAD CANCELLED1", "warn");
-                    return;
+                boolean isPlaylist = "/playlist".equals(vPath) || vList != null && vId == null;
+
+                if(isPlaylist) {
+                    logEvent("URL POINTS TO A PLAYLIST", "warn");
+
+                    YoutubeDLRequest request3 = new YoutubeDLRequest(url);
+                    request3.addOption("-f" ,format);
+                    request3.addOption("-o", loc + "/%(id)s.%(ext)s");
+                    request3.addOption("--extractor-args", TVClients);
+
+                    logEvent("DOWNLOADING PLAYLIST...", "warn");
+
+                    YoutubeDLResponse response3 = YoutubeDL.getInstance().execute(request3, pid, (progress, eta, message) ->
+                    {
+                        if(progress == -1.0) {
+                            logEvent(message, "warn");
+                        }
+                        else {
+                            sendDownloadProgress(String.valueOf(progress));
+                            logEvent(progress + "% Downloaded", "false");
+                        }
+                        return Unit.INSTANCE;
+                    });
+                    System.out.println(response3.getOut());
+                    logEvent("PLAYLIST WAS SUCCESSFULLY SAVED TO CACHE", "false");
+                } else {
+
+                    createInfoSingleMedia(url, format);
+
+                    logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
+
+                    //create a primary request especially for downloading
+                    //as the first one gets malformed
+                    YoutubeDLRequest request1 = new YoutubeDLRequest(url);
+                    request1.addOption("-f" ,format);
+                    request1.addOption("-o", loc + "/%(id)s.%(ext)s");
+                    request1.addOption("--load-info-json", infoFile.getAbsolutePath());
+                    request1.addOption("--extractor-args", TVClients);
+
+                    logEvent("DOWNLOADING..." , "warn");
+                    YoutubeDLResponse response = YoutubeDL.getInstance().execute(request1, pid, (progress, eta, message) ->
+                    {
+                        if(progress == -1.0) {
+                            logEvent(message, "warn");
+                        }
+                        else {
+                            sendDownloadProgress(String.valueOf(progress));
+                            logEventReplace(progress + "% Downloaded", "false");
+                        }
+                        return Unit.INSTANCE;
+                    });
+                    callJsAudio(loc + "/" + id + "." + ext);
+                    System.out.println(response.getOut());
                 }
-
-                try(FileWriter infoFileWriter = new FileWriter(infoFile)) {
-                    infoFileWriter.write(response0);
-                }
-
-                logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
-
-                //create a primary request especially for downloading
-                //as the first one gets malformed
-                YoutubeDLRequest request1 = new YoutubeDLRequest(url);
-                request1.addOption("-f" ,format);
-                request1.addOption("-o", loc + "/%(id)s.%(ext)s");
-                request1.addOption("--load-info-json", infoFile.getAbsolutePath());
-
-                logEvent("DOWNLOADING..." , "warn");
-                YoutubeDLResponse response = YoutubeDL.getInstance().execute(request1, pid, (progress, eta, message) ->
-                {
-                    if(progress == -1.0) {
-                        logEvent(message, "warn");
-                    }
-                    else {
-                        sendDownloadProgress(String.valueOf(progress));
-                        logEventReplace(progress + "% Downloaded", "false");
-                    }
-                    return Unit.INSTANCE;
-                });
-                System.out.println(response.getOut());
+                sendOnDownloadComplete(false);
             }
             catch (YoutubeDLException e) {
                 logEvent("ERROR GETTING INFO : " + e.getMessage(), "true");
@@ -156,16 +172,11 @@ public class MainActivity extends BridgeActivity {
             }
             catch (YoutubeDL.CanceledException e) {
                 logEvent("DOWNLOAD CANCELLED", "warn");
+                sendOnDownloadComplete(true);
                 return;
-            }
-            catch (JSONException e) {
-                logEvent("INVALID JSON INPUT : " + e.getMessage(), "true");
-            }
-            /*catch (IOException e) {
+            } catch (IOException e) {
                 logEvent("IO ERROR : " + e.getMessage(), "true");
-                causeErrors();
-                return;
-            }*/
+            }
             catch (Exception e) {
                 logEvent("JAVA ERROR : " + e.getMessage(), "true");
                 causeErrors();
@@ -175,14 +186,51 @@ public class MainActivity extends BridgeActivity {
                 download(STATE.UNLOCK);
                 isDownloading = false;
                 shouldStop.set(false);
-                sendOnDownloadComplete();
                 boolean infoFileDeleted = infoFile.delete();
                 System.out.println("infoFile was deleted" + infoFileDeleted);
             }
             logEvent("DOWNLOAD SUCCESSFUL" , "false");
-            callJsAudio(loc + "/" + id + "." + ext);
         }).start();
     }
+
+    public void createInfoSingleMedia(String url, String format) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
+        //create a request for getting info about media
+        YoutubeDLRequest request2 = new YoutubeDLRequest(url);
+        //get info about the media with these args
+        request2.addOption("-f", format);
+        request2.addOption("--dump-json");
+        YoutubeDLResponse response2 = YoutubeDL.getInstance().execute(request2, pid, (progress, eta, message) -> {
+            //logEvent(message, "warn");
+            return Unit.INSTANCE;
+        });
+        JSONObject json = new JSONObject(response2.getOut());
+        response0 = response2.getOut();
+        //create a VideoInfo object
+        //assign the values to the identifiers
+        title = json.getString("title");
+        ext = json.getString("ext");
+        id = json.getString("id");
+        pid = "YT-" + System.currentTimeMillis();
+        if (shouldStop.get()) {
+            logEvent("DOWNLOAD CANCELLED1", "warn");
+            return;
+        }
+        try (FileWriter infoFileWriter = new FileWriter(infoFile)) {
+            infoFileWriter.write(response0);
+        }
+    }
+
+    /*
+    public void createInfoMultiMedia(String url, String format) throws YoutubeDLException, InterruptedException, YoutubeDL.CanceledException {
+        YoutubeDLRequest request4 = new YoutubeDLRequest(url);
+        request4.addOption("-f", format);
+        VideoInfo playlistInfo = YoutubeDL.getInstance().getInfo(request4);
+        title = playlistInfo.getTitle();
+        ext = playlistInfo.getExt();
+        id = playlistInfo.getId();
+        pid = "YT-" + System.currentTimeMillis();
+    }
+    */
 
     @JavascriptInterface
     public void callJsAudio(String fileLoc) {
@@ -204,17 +252,21 @@ public class MainActivity extends BridgeActivity {
             new Thread(() -> {
                 //it can throw an exception
                 try {
-                    //initialize the lib like extracting python things...
+                    //initialize the library
+                    infLoad(10);
                     YoutubeDL.getInstance().init(this);
                     //update yt-dlp on start
                     logEvent("UPDATING BINARY", "warn");
+                    infLoad(75);
                     YoutubeDL.UpdateStatus status = YoutubeDL.getInstance().updateYoutubeDL(this, YoutubeDL.UpdateChannel._STABLE);
                     switch (status) {
                         case DONE:
                             logEventReplace("UPDATE COMPLETE", "false");
+                            infLoad(100);
                             break;
                         case ALREADY_UP_TO_DATE:
                             logEventReplace("ALREADY UP TO DATE", "false");
+                            infLoad(100);
                             break;
                         case null:
                             logEvent("AN NULL POINTER EXCEPTION HAS OCCURRED WHEN UPDATING YT-DLP BINARY", "true");
@@ -228,17 +280,20 @@ public class MainActivity extends BridgeActivity {
                     //if a lib or java error occurs, catch it
                 } catch (YoutubeDLException e) {
                     //print the cause
-                    logEvent("YTDL FAIL : " + e.getMessage() , "true");
+                    logEvent("YTDL FAIL CHECK YOUR INTERNET: " + e.getMessage() , "true");
                     causeErrors();
+                    sendOnDownloadComplete(true);
                     return;
                 } catch (Exception e) {
                     //print the cause
                     logEvent("JAVA ERROR : " + e.getMessage(), "true");
                     causeErrors();
+                    sendOnDownloadComplete(true);
                     return;
                 }
                     //once it's done we log
                     logEvent("YTDL OK", "false");
+                    sendOnDownloadComplete(false);
             }).start();
     }
 
@@ -248,13 +303,17 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(this::finish);
     }
 
+    public void infLoad(int progress) {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadProgress("+ progress +")", null));
+    }
+
     //android can call this to log events to js
     public void logEvent(String event, String isError){
 
         //quote the event for js so it does not freak out
         String safe = JSONObject.quote(event);
         String error;
-        if(isError.equals("warn")){
+        if(isError.equals("warn") || isError.equals("verbose")){
             //if it is "warn", we pass "warn"
             error = JSONObject.quote(isError);
         }
@@ -310,6 +369,7 @@ public class MainActivity extends BridgeActivity {
         try {
                 logEvent("TRYING TO CANCEL DOWNLOAD...", "warn");
                 YoutubeDL.getInstance().destroyProcessById(pid);
+                sendOnDownloadComplete(true);
                 shouldStop.set(true);
 
         }
@@ -323,7 +383,7 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadProgress(" + safeProgress + ")", null));
     }
 
-    public void sendOnDownloadComplete() {
-        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onDownloadComplete()", null));
+    public void sendOnDownloadComplete(boolean isError) {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onDownloadComplete(" + isError + ")", null));
     }
 }

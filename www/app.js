@@ -71,6 +71,9 @@ window.logEvent = function (event, isError) {
     else if (isError === "warn") {
         line.style.color = "yellow";
     }
+    else if (isError === "verbose") {
+        line.style.color = "#3a3a3aff";
+    }
     else {
         line.style.color = "white";
     }
@@ -141,6 +144,7 @@ window.onInitialized = function () {
 
 
 function onDownloadClick(url) {
+    //url = url.toLowerCase();
     if (testMode == false) {
         window.Android.downloadToCache(url, extention);
     }
@@ -192,7 +196,7 @@ function enableAllButtons() {
 */
 
 //aka audio player, android callable
-window.onLoadClick = function (nativeFilePath) {
+window.onLoadClick = async function (nativeFilePath) {
     audioPlayer.style.display = "";
     if(testMode == false) {
         try {
@@ -200,7 +204,7 @@ window.onLoadClick = function (nativeFilePath) {
             logEvent(webFilePath);
             if(nativeFilePath) {
                 audioPlayer.src = webFilePath;
-                audioPlayer.load();
+               await audioPlayer.load();
             }
             else {
                 logEventReplace("Audio not found", true);
@@ -278,16 +282,24 @@ function wait(ms) {
 async function cancelDownload() {
     appState.isCancel = true;
     render();
-    await wait(1000);
+    await wait(250);
     window.Android.abortDownload();
 }
 
 window.downloadProgress = function(progress) {
+    background.style.opacity = "0.5";
     background.style.height = progress + "%";
 }
 
-window.onDownloadComplete = function() {
+window.onDownloadComplete = async function(isError) {
+    if (isError) {
+        background.style.background = "red";
+    }
+    await wait(1000);
+    background.style.opacity = "0";
+    await wait(1000);
     background.style.height = "0%";
+    background.style.background = "green";
 }
 
 jsIsReady();
