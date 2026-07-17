@@ -52,6 +52,11 @@ public class MainActivity extends BridgeActivity {
     private String loc;
     public boolean isDownloading = false;
     //download related
+    String url;
+    String format;
+    int maxTries;
+    int trial;
+    boolean inTrial;
     File infoFile;
     String response0;
     AtomicBoolean shouldStop = new AtomicBoolean();
@@ -67,6 +72,8 @@ public class MainActivity extends BridgeActivity {
         //assign the location of the media to be downloaded
         loc = getCacheDir().getAbsolutePath() + "/music";
         infoFile = new File(loc, "infoFile.json");
+        maxTries = 3;
+        trial = 0;
         //add the JavaScript bride to "this" class with the name "Android"
         runOnUiThread(() -> getBridge().getWebView().addJavascriptInterface(this, "Android"));
     }
@@ -81,10 +88,12 @@ public class MainActivity extends BridgeActivity {
             logEvent("URL IS EMPTY" , "warn");
             return;
         }
+        this.url = url;
+        this.format = format;
         shouldStop.set(false);
         download(STATE.LOCK);
         isDownloading = true;
-        //this thing loves to touch network and haywire your phone(app not responding)
+        //this thing loves to touch network and haywire your phone(ANR)
         //so run it on a new thread
         new Thread(() -> {
             try {
@@ -97,6 +106,7 @@ public class MainActivity extends BridgeActivity {
                 System.out.println("MKDIRS : " + isDirectoryPresent);
                 //get information about the video to be downloaded and log it
                 logEvent("FETCHING INFO..." , "warn");
+                infLoad(25);
                 //getMediaInfo(url, format);
                 //String TVClients = "youtube:player_client=android_vr";
                 Uri urlParser = Uri.parse(url);
@@ -109,7 +119,6 @@ public class MainActivity extends BridgeActivity {
                 boolean isPlaylist = "/playlist".equals(vPath) || vList != null && vId == null;
 
                 if(isPlaylist) {
-                    logEvent("URL POINTS TO A PLAYLIST", "warn");
 
                     YoutubeDLRequest request3 = new YoutubeDLRequest(url);
                     request3.addOption("-f" ,format);
@@ -136,7 +145,7 @@ public class MainActivity extends BridgeActivity {
                     createInfoSingleMedia(url, format);
 
                     logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
-
+                    infLoad(50);
                     //create a primary request especially for downloading
                     //as the first one gets malformed
                     YoutubeDLRequest request1 = new YoutubeDLRequest(url);
@@ -163,33 +172,53 @@ public class MainActivity extends BridgeActivity {
                 sendOnDownloadComplete(false);
             }
             catch (YoutubeDLException e) {
-                logEvent("ERROR GETTING INFO : " + e.getMessage(), "true");
+                logEvent("ERROR GETTING INFO", "true");
+                sendOnDownloadComplete(true);
+                if(trial < maxTries) {
+                    inTrial = true;
+                    trial++;
+                    logEvent("RETRYING : "+trial+"/"+maxTries , "warn");
+                    isDownloading = false;
+                    downloadToCache(this.url, this.format);
+                } else {
+                    logEvent("DOWNLOAD FAILED, RETRY?", "warn");
+                    inTrial = false;
+                    trial = 0;
+                }
                 return;
             }
             catch (InterruptedException e) {
+                sendOnDownloadComplete(true);
                 logEvent("DOWNLOAD INTERRUPTED : " + e.getMessage(), "warn");
                 return;
             }
             catch (YoutubeDL.CanceledException e) {
                 logEvent("DOWNLOAD CANCELLED", "warn");
+                download(STATE.UNLOCK);
                 sendOnDownloadComplete(true);
                 return;
             } catch (IOException e) {
+                sendOnDownloadComplete(true);
                 logEvent("IO ERROR : " + e.getMessage(), "true");
             }
             catch (Exception e) {
+                sendOnDownloadComplete(true);
                 logEvent("JAVA ERROR : " + e.getMessage(), "true");
                 causeErrors();
                 return;
             }
             finally{
-                download(STATE.UNLOCK);
+                if (!inTrial) {
+                    download(STATE.UNLOCK);
+                }
                 isDownloading = false;
                 shouldStop.set(false);
                 boolean infoFileDeleted = infoFile.delete();
                 System.out.println("infoFile was deleted" + infoFileDeleted);
             }
+            inTrial = false;
             logEvent("DOWNLOAD SUCCESSFUL" , "false");
+            download(STATE.UNLOCK);
         }).start();
     }
 
@@ -257,7 +286,7 @@ public class MainActivity extends BridgeActivity {
                     YoutubeDL.getInstance().init(this);
                     //update yt-dlp on start
                     logEvent("UPDATING BINARY", "warn");
-                    infLoad(75);
+                    infLoad(50);
                     YoutubeDL.UpdateStatus status = YoutubeDL.getInstance().updateYoutubeDL(this, YoutubeDL.UpdateChannel._STABLE);
                     switch (status) {
                         case DONE:
@@ -280,8 +309,8 @@ public class MainActivity extends BridgeActivity {
                     //if a lib or java error occurs, catch it
                 } catch (YoutubeDLException e) {
                     //print the cause
-                    logEvent("YTDL FAIL CHECK YOUR INTERNET: " + e.getMessage() , "true");
-                    causeErrors();
+                    logEventReplace("YTDL FAIL CHECK YOUR INTERNET: " + e.getMessage() , "true");
+                    androidReady();
                     sendOnDownloadComplete(true);
                     return;
                 } catch (Exception e) {
