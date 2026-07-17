@@ -98,7 +98,7 @@ public class MainActivity extends BridgeActivity {
                 //get information about the video to be downloaded and log it
                 logEvent("FETCHING INFO..." , "warn");
                 //getMediaInfo(url, format);
-                String TVClients = "youtube:player_client=android,default,tv";
+                String TVClients = "youtube:player_client=default,tv";
                 Uri urlParser = Uri.parse(url);
                 String vList = urlParser.getQueryParameter("list");
                 String vId = urlParser.getQueryParameter("v");
