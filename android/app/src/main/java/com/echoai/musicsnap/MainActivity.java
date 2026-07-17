@@ -98,7 +98,7 @@ public class MainActivity extends BridgeActivity {
                 //get information about the video to be downloaded and log it
                 logEvent("FETCHING INFO..." , "warn");
                 //getMediaInfo(url, format);
-                String TVClients = "youtube:player_client=default,tv";
+                //String TVClients = "youtube:player_client=android_vr";
                 Uri urlParser = Uri.parse(url);
                 String vList = urlParser.getQueryParameter("list");
                 String vId = urlParser.getQueryParameter("v");
@@ -114,7 +114,7 @@ public class MainActivity extends BridgeActivity {
                     YoutubeDLRequest request3 = new YoutubeDLRequest(url);
                     request3.addOption("-f" ,format);
                     request3.addOption("-o", loc + "/%(id)s.%(ext)s");
-                    request3.addOption("--extractor-args", TVClients);
+                    //request3.addOption("--extractor-args", TVClients);
 
                     logEvent("DOWNLOADING PLAYLIST...", "warn");
 
@@ -143,7 +143,7 @@ public class MainActivity extends BridgeActivity {
                     request1.addOption("-f" ,format);
                     request1.addOption("-o", loc + "/%(id)s.%(ext)s");
                     request1.addOption("--load-info-json", infoFile.getAbsolutePath());
-                    request1.addOption("--extractor-args", TVClients);
+                    //request1.addOption("--extractor-args", TVClients);
 
                     logEvent("DOWNLOADING..." , "warn");
                     YoutubeDLResponse response = YoutubeDL.getInstance().execute(request1, pid, (progress, eta, message) ->
