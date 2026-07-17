@@ -283,6 +283,7 @@ public class MainActivity extends BridgeActivity {
                 try {
                     //initialize the library
                     infLoad(10);
+                    logEvent("LOADING YTDL LIBRARY", "warn");
                     YoutubeDL.getInstance().init(this);
                     //update yt-dlp on start
                     logEvent("UPDATING BINARY", "warn");
