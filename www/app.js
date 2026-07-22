@@ -321,7 +321,6 @@ function putValuesIntoOptions() {
     }
     else {
         oldFormats = formats;
-        logEvent(formats, "verbose");
         jsonFormats = JSON.parse(formats);
         for(let i = 0; i < jsonFormats.length; i++) {
             let optionValue = document.createElement("option");
@@ -333,8 +332,11 @@ function putValuesIntoOptions() {
 }
 
 function sendChangedSignalToJavaForContinuingDownload() {
-    let downloadFormat = options.value;
-    window.Android.receiveFormatFromJs(downloadFormat);
+    let downloadFormat = options.querySelector("option:checked").value;
+    let formatNameSave = options.querySelector("option:checked").textContent;
+    logEvent(downloadFormat);
+    logEvent(formatNameSave);
+    window.Android.receiveFormatFromJs(downloadFormat,formatNameSave);
 }
 
 jsIsReady();

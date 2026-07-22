@@ -64,6 +64,8 @@ public class MainActivity extends BridgeActivity {
 
     String formatFromJS;
     String formats;
+
+    String formatNameSave;
     Semaphore lock = new Semaphore(0);
 
     //suppress js errors in ide
@@ -80,7 +82,7 @@ public class MainActivity extends BridgeActivity {
         maxTries = 3;
         trial = 0;
         //fallback
-        format = "bestaudio[ext!=webm]/bestaudio";
+        //format = "bestaudio[ext!=webm]/bestaudio";
         //add the JavaScript bride to "this" class with the name "Android"
         runOnUiThread(() -> getBridge().getWebView().addJavascriptInterface(this, "Android"));
     }
@@ -126,16 +128,18 @@ public class MainActivity extends BridgeActivity {
                 boolean isPlaylist = "/playlist".equals(vPath) || vList != null && vId == null;
 
 
-
+                logEvent(String.valueOf(inTrial), "verbose");
+                if(!inTrial) {
+                    lock.drainPermits();
+                }
                 if(isPlaylist) {
 
                     //wasted two fucking hours of my life TT
-                    lock.drainPermits();
 
                     formats = """
                         [
-                            { "format_id": 0,"ext": "m4a" },
-                            { "format_id": 1,"ext": "mp4" }
+                            { "format_id": "bestaudio[ext!=webm]/bestaudio","ext": "Best Audio, WebM excluded" },
+                            { "format_id": "mp4","ext": "MP4 Video" }
                         ]
                         """;
                     logEvent(formats, "verbose");
@@ -153,11 +157,25 @@ public class MainActivity extends BridgeActivity {
 
                 } else {
 
-                    downloadSingleMedia();
+                    //logEvent(formats, "verbose");
+                    //syncVariables(true);
+                    //syncVariables(formats);
+                    //putValuesIntoOptions();
+                    //render();
+                    //logEvent("SELECT DOWNLOAD FORMAT FOR SINGLE MEDIA", "warn");
+                    //lock.acquire();
+                    if(shouldStop.get()) {
+                        return;
+                    } else {
+                        downloadSingleMedia();
+                    }
 
                 }
             }
             catch (YoutubeDLException e) {
+
+                //This is the most dogshit code I have ever seen.
+
                 logEvent("ERROR GETTING INFO : ", "true");
                 logEvent(e.getMessage(), "verbose");
                 sendOnDownloadComplete(true);
@@ -184,6 +202,8 @@ public class MainActivity extends BridgeActivity {
             }
             catch (YoutubeDL.CanceledException e) {
                 logEvent("DOWNLOAD CANCELLED", "warn");
+                inTrial = false;
+                trial = 0;
                 download(STATE.UNLOCK);
                 sendOnDownloadComplete(true);
                 return;
@@ -220,6 +240,9 @@ public class MainActivity extends BridgeActivity {
         if(formatFromJS == null) {
             formatFromJS = format;
         }
+
+        logEvent(formatFromJS, "false");
+
         request3.addOption("-f" ,formatFromJS);
         request3.addOption("-o", loc + "/%(id)s.%(ext)s");
         //request3.addOption("--extractor-args", TVClients);
@@ -249,7 +272,7 @@ public class MainActivity extends BridgeActivity {
         //create a primary request especially for downloading
         //as the first one gets malformed
         YoutubeDLRequest request1 = new YoutubeDLRequest(url);
-        request1.addOption("-f" ,format);
+        request1.addOption("-f" ,formatFromJS);
         request1.addOption("-o", loc + "/%(id)s.%(ext)s");
         request1.addOption("--load-info-json", infoFile.getAbsolutePath());
         //request1.addOption("--extractor-args", TVClients);
@@ -284,12 +307,17 @@ public class MainActivity extends BridgeActivity {
         //create a VideoInfo object
         //assign the values to the identifiers
         title = json.getString("title");
-        ext = json.getString("ext");
         id = json.getString("id");
         pid = "YT-" + System.currentTimeMillis();
 
         formats = String.valueOf(json.getJSONArray("formats"));
         syncVariables(formats);
+        putValuesIntoOptions();
+        syncVariables(true);
+        render();
+        lock.acquire();
+
+        ext = formatNameSave;
 
         if (shouldStop.get()) {
             logEvent("DOWNLOAD CANCELLED1", "warn");
@@ -300,21 +328,10 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    /*
-    public void createInfoMultiMedia(String url, String format) throws YoutubeDLException, InterruptedException, YoutubeDL.CanceledException {
-        YoutubeDLRequest request4 = new YoutubeDLRequest(url);
-        request4.addOption("-f", format);
-        VideoInfo playlistInfo = YoutubeDL.getInstance().getInfo(request4);
-        title = playlistInfo.getTitle();
-        ext = playlistInfo.getExt();
-        id = playlistInfo.getId();
-        pid = "YT-" + System.currentTimeMillis();
-    }
-    */
-
     @JavascriptInterface
-    public void receiveFormatFromJs(String formatFromJS) {
+    public void receiveFormatFromJs(String formatFromJS, String formatNameSave) {
         this.formatFromJS = formatFromJS;
+        this.formatNameSave = formatNameSave;
         //semaphore
         lock.release();
     }
@@ -478,7 +495,7 @@ public class MainActivity extends BridgeActivity {
 
     public void syncVariables(String formats) {
         String safeFormats = JSONObject.quote(formats);
-        logEvent(safeFormats, "verbose");
+        //logEvent(safeFormats, "verbose");
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("syncVariables(" + safeFormats + ")", null));
     }
 
