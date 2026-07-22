@@ -5,12 +5,15 @@ const appState = {
     isDownloading: false,
     testMode: false,
     isCancel: false,
+    optionsVisible: false,
 }
 
 //don't enable for production!
 let testModeCanBeEnabled = true;
 appState.testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
+let formats;
+let oldFormats = "not null btw";
 //it's for testing interface in browser.
 
 let extention = "bestaudio[ext!=webm]/bestaudio";
@@ -31,15 +34,17 @@ const testArea = document.getElementById("OR_text");
 const appInterface = document.getElementById("appInterface");
 const appBody = document.getElementById("appBody");
 const background = document.getElementById("background");
+const options = document.getElementById("options");
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
 
-function render() {
+window.render = function () {
     downloadAudio.disabled = appState.hasError || appState.isCancel;
     saveAudio.disabled = appState.hasError;
     loadAudio.hidden = !appState.testMode;
     testMode = appState.testMode;
+    options.hidden = !appState.optionsVisible || appState.hasError ;
     if(appState.isCancel) {
         downloadAudio.style.backgroundColor = "";
         downloadAudio.textContent = "Cancelling...";
@@ -146,7 +151,9 @@ window.onInitialized = function () {
 function onDownloadClick(url) {
     //url = url.toLowerCase();
     if (testMode == false) {
-        window.Android.downloadToCache(url, extention);
+        //window.Android.downloadToCache(url, extention);
+        options.value = "";
+        window.Android.downloadToCache(url);
     }
     else if(testMode == true) {
        logEventReplace("TEST DOWNLOAD : " + url);
@@ -241,6 +248,7 @@ saveAudio.addEventListener("click", onSaveClick);
 loadAudio.addEventListener("click", onLoadClick);
 exitButton.addEventListener("click", exitPage);
 testModeEnable.addEventListener("click", enableTestMode);
+options.addEventListener("change", sendChangedSignalToJavaForContinuingDownload);
 
 function sendToDownload() {
     let url = urlInput.value;
@@ -271,6 +279,7 @@ window.downloadState = function(state) {
     else if(state === "UNLOCK") {
        appState.isDownloading = false;
        appState.isCancel = false;
+       options.value = "";
     }
     render();
 }
@@ -300,6 +309,32 @@ window.onDownloadComplete = async function(isError) {
     await wait(1000);
     background.style.height = "0%";
     background.style.background = "green";
+}
+
+window.syncVariables = function(newFormats) {
+    formats = newFormats;
+}
+
+function putValuesIntoOptions() {
+    if(oldFormats === formats) {
+        return;
+    }
+    else {
+        oldFormats = formats;
+        logEvent(formats, "verbose");
+        jsonFormats = JSON.parse(formats);
+        for(let i = 0; i < jsonFormats.length; i++) {
+            let optionValue = document.createElement("option");
+            optionValue.textContent = jsonFormats[i].ext;
+            optionValue.value = jsonFormats[i].format_id;
+            options.appendChild(optionValue);
+        }
+    }
+}
+
+function sendChangedSignalToJavaForContinuingDownload() {
+    let downloadFormat = options.value;
+    window.Android.receiveFormatFromJs(downloadFormat);
 }
 
 jsIsReady();

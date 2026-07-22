@@ -19,6 +19,7 @@ import java.io.File;
 
 //import com.yausername.youtubedl_android.YoutubeDLUpdater;
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 //heart of media download
 import com.yausername.youtubedl_android.YoutubeDL;
@@ -61,6 +62,10 @@ public class MainActivity extends BridgeActivity {
     String response0;
     AtomicBoolean shouldStop = new AtomicBoolean();
 
+    String formatFromJS;
+    String formats;
+    Semaphore lock = new Semaphore(0);
+
     //suppress js errors in ide
     @SuppressLint("JavascriptInterface")
     //execute this method before parent class
@@ -74,6 +79,8 @@ public class MainActivity extends BridgeActivity {
         infoFile = new File(loc, "infoFile.json");
         maxTries = 3;
         trial = 0;
+        //fallback
+        format = "bestaudio[ext!=webm]/bestaudio";
         //add the JavaScript bride to "this" class with the name "Android"
         runOnUiThread(() -> getBridge().getWebView().addJavascriptInterface(this, "Android"));
     }
@@ -81,7 +88,7 @@ public class MainActivity extends BridgeActivity {
     //JavaScript callable method
     @JavascriptInterface
     //download and save the media to music folder inside app cache
-    public void downloadToCache(String url, String format) {
+    public void downloadToCache(String url) {
         //WORKING VERSION
         //do not except an empty url
         if(url == null || url.isEmpty() || isDownloading) {
@@ -89,7 +96,7 @@ public class MainActivity extends BridgeActivity {
             return;
         }
         this.url = url;
-        this.format = format;
+        //this.format = format;
         shouldStop.set(false);
         download(STATE.LOCK);
         isDownloading = true;
@@ -118,73 +125,56 @@ public class MainActivity extends BridgeActivity {
 
                 boolean isPlaylist = "/playlist".equals(vPath) || vList != null && vId == null;
 
+
+
                 if(isPlaylist) {
 
-                    YoutubeDLRequest request3 = new YoutubeDLRequest(url);
-                    request3.addOption("-f" ,format);
-                    request3.addOption("-o", loc + "/%(id)s.%(ext)s");
-                    //request3.addOption("--extractor-args", TVClients);
+                    //wasted two fucking hours of my life TT
+                    lock.drainPermits();
 
-                    logEvent("DOWNLOADING PLAYLIST...", "warn");
+                    formats = """
+                        [
+                            { "format_id": 0,"ext": "m4a" },
+                            { "format_id": 1,"ext": "mp4" }
+                        ]
+                        """;
+                    logEvent(formats, "verbose");
+                    syncVariables(true);
+                    syncVariables(formats);
+                    putValuesIntoOptions();
+                    render();
+                    logEvent("SELECT DOWNLOAD FORMAT", "warn");
+                    lock.acquire();
+                    if(shouldStop.get()) {
+                        return;
+                    } else {
+                        downloadPlaylist();
+                    }
 
-                    YoutubeDLResponse response3 = YoutubeDL.getInstance().execute(request3, pid, (progress, eta, message) ->
-                    {
-                        if(progress == -1.0) {
-                            logEvent(message, "warn");
-                        }
-                        else {
-                            sendDownloadProgress(String.valueOf(progress));
-                            logEvent(progress + "% Downloaded", "false");
-                        }
-                        return Unit.INSTANCE;
-                    });
-                    System.out.println(response3.getOut());
-                    logEvent("PLAYLIST WAS SUCCESSFULLY SAVED TO CACHE", "false");
                 } else {
 
-                    createInfoSingleMedia(url, format);
+                    downloadSingleMedia();
 
-                    logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
-                    infLoad(50);
-                    //create a primary request especially for downloading
-                    //as the first one gets malformed
-                    YoutubeDLRequest request1 = new YoutubeDLRequest(url);
-                    request1.addOption("-f" ,format);
-                    request1.addOption("-o", loc + "/%(id)s.%(ext)s");
-                    request1.addOption("--load-info-json", infoFile.getAbsolutePath());
-                    //request1.addOption("--extractor-args", TVClients);
-
-                    logEvent("DOWNLOADING..." , "warn");
-                    YoutubeDLResponse response = YoutubeDL.getInstance().execute(request1, pid, (progress, eta, message) ->
-                    {
-                        if(progress == -1.0) {
-                            logEvent(message, "warn");
-                        }
-                        else {
-                            sendDownloadProgress(String.valueOf(progress));
-                            logEventReplace(progress + "% Downloaded", "false");
-                        }
-                        return Unit.INSTANCE;
-                    });
-                    callJsAudio(loc + "/" + id + "." + ext);
-                    System.out.println(response.getOut());
                 }
-                sendOnDownloadComplete(false);
             }
             catch (YoutubeDLException e) {
-                logEvent("ERROR GETTING INFO", "true");
+                logEvent("ERROR GETTING INFO : ", "true");
+                logEvent(e.getMessage(), "verbose");
                 sendOnDownloadComplete(true);
                 if(trial < maxTries) {
                     inTrial = true;
                     trial++;
                     logEvent("RETRYING : "+trial+"/"+maxTries , "warn");
                     isDownloading = false;
-                    downloadToCache(this.url, this.format);
+                    downloadToCache(this.url);
                 } else {
                     logEvent("DOWNLOAD FAILED, RETRY?", "warn");
+                    syncVariables(false);
+                    render();
                     inTrial = false;
                     trial = 0;
                 }
+                lock.release();
                 return;
             }
             catch (InterruptedException e) {
@@ -211,17 +201,74 @@ public class MainActivity extends BridgeActivity {
                 if (!inTrial) {
                     download(STATE.UNLOCK);
                 }
+                syncVariables(false);
+                render();
                 isDownloading = false;
                 shouldStop.set(false);
                 boolean infoFileDeleted = infoFile.delete();
                 System.out.println("infoFile was deleted" + infoFileDeleted);
             }
             inTrial = false;
+            sendOnDownloadComplete(false);
             logEvent("DOWNLOAD SUCCESSFUL" , "false");
             download(STATE.UNLOCK);
         }).start();
     }
 
+    public void downloadPlaylist() throws YoutubeDLException, YoutubeDL.CanceledException, InterruptedException{
+        YoutubeDLRequest request3 = new YoutubeDLRequest(url);
+        if(formatFromJS == null) {
+            formatFromJS = format;
+        }
+        request3.addOption("-f" ,formatFromJS);
+        request3.addOption("-o", loc + "/%(id)s.%(ext)s");
+        //request3.addOption("--extractor-args", TVClients);
+
+        logEvent("DOWNLOADING PLAYLIST...", "warn");
+
+        YoutubeDLResponse response3 = YoutubeDL.getInstance().execute(request3, pid, (progress, eta, message) ->
+        {
+            if(progress == -1.0) {
+                logEvent(message, "warn");
+            }
+            else {
+                sendDownloadProgress(String.valueOf(progress));
+                logEvent(progress + "% Downloaded", "false");
+            }
+            return Unit.INSTANCE;
+        });
+        System.out.println(response3.getOut());
+        logEvent("PLAYLIST WAS SUCCESSFULLY SAVED TO CACHE", "false");
+    }
+
+    public void downloadSingleMedia()  throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException {
+        createInfoSingleMedia(url, format);
+
+        logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
+        infLoad(50);
+        //create a primary request especially for downloading
+        //as the first one gets malformed
+        YoutubeDLRequest request1 = new YoutubeDLRequest(url);
+        request1.addOption("-f" ,format);
+        request1.addOption("-o", loc + "/%(id)s.%(ext)s");
+        request1.addOption("--load-info-json", infoFile.getAbsolutePath());
+        //request1.addOption("--extractor-args", TVClients);
+
+        logEvent("DOWNLOADING..." , "warn");
+        YoutubeDLResponse response = YoutubeDL.getInstance().execute(request1, pid, (progress, eta, message) ->
+        {
+            if(progress == -1.0) {
+                logEvent(message, "warn");
+            }
+            else {
+                sendDownloadProgress(String.valueOf(progress));
+                logEventReplace(progress + "% Downloaded", "false");
+            }
+            return Unit.INSTANCE;
+        });
+        callJsAudio(loc + "/" + id + "." + ext);
+        System.out.println(response.getOut());
+    }
     public void createInfoSingleMedia(String url, String format) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
         //create a request for getting info about media
         YoutubeDLRequest request2 = new YoutubeDLRequest(url);
@@ -240,6 +287,10 @@ public class MainActivity extends BridgeActivity {
         ext = json.getString("ext");
         id = json.getString("id");
         pid = "YT-" + System.currentTimeMillis();
+
+        formats = String.valueOf(json.getJSONArray("formats"));
+        syncVariables(formats);
+
         if (shouldStop.get()) {
             logEvent("DOWNLOAD CANCELLED1", "warn");
             return;
@@ -260,6 +311,13 @@ public class MainActivity extends BridgeActivity {
         pid = "YT-" + System.currentTimeMillis();
     }
     */
+
+    @JavascriptInterface
+    public void receiveFormatFromJs(String formatFromJS) {
+        this.formatFromJS = formatFromJS;
+        //semaphore
+        lock.release();
+    }
 
     @JavascriptInterface
     public void callJsAudio(String fileLoc) {
@@ -398,10 +456,11 @@ public class MainActivity extends BridgeActivity {
     public void abortDownload() {
         try {
                 logEvent("TRYING TO CANCEL DOWNLOAD...", "warn");
+                shouldStop.set(true);
+                lock.release();
                 YoutubeDL.getInstance().destroyProcessById(pid);
                 sendOnDownloadComplete(true);
-                shouldStop.set(true);
-
+                render();
         }
         catch (Exception e) {
             logEvent("CANCELLATION FAILED", "true");
@@ -415,5 +474,23 @@ public class MainActivity extends BridgeActivity {
 
     public void sendOnDownloadComplete(boolean isError) {
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onDownloadComplete(" + isError + ")", null));
+    }
+
+    public void syncVariables(String formats) {
+        String safeFormats = JSONObject.quote(formats);
+        logEvent(safeFormats, "verbose");
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("syncVariables(" + safeFormats + ")", null));
+    }
+
+    public void syncVariables(boolean optionsVisible) {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("appState.optionsVisible = " + optionsVisible + " ", null));
+    }
+
+    public void render() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("render()", null));
+    }
+
+    public void putValuesIntoOptions() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("putValuesIntoOptions()", null));
     }
 }
