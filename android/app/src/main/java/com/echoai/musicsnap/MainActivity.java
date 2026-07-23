@@ -62,6 +62,7 @@ public class MainActivity extends BridgeActivity {
     String response0;
     AtomicBoolean shouldStop = new AtomicBoolean();
 
+    boolean isDownloadFailed;
     String formatFromJS;
     String formats;
 
@@ -79,8 +80,9 @@ public class MainActivity extends BridgeActivity {
         //assign the location of the media to be downloaded
         loc = getCacheDir().getAbsolutePath() + "/music";
         infoFile = new File(loc, "infoFile.json");
-        maxTries = 3;
+        maxTries = 5;
         trial = 0;
+        isDownloadFailed = false;
         //fallback
         //format = "bestaudio[ext!=webm]/bestaudio";
         //add the JavaScript bride to "this" class with the name "Android"
@@ -167,6 +169,7 @@ public class MainActivity extends BridgeActivity {
                     if(shouldStop.get()) {
                         return;
                     } else {
+                        createInfoSingleMedia(url);
                         downloadSingleMedia();
                     }
 
@@ -229,8 +232,11 @@ public class MainActivity extends BridgeActivity {
                 System.out.println("infoFile was deleted" + infoFileDeleted);
             }
             inTrial = false;
-            sendOnDownloadComplete(false);
-            logEvent("DOWNLOAD SUCCESSFUL" , "false");
+            if(!isDownloadFailed) {
+                sendOnDownloadComplete(false);
+                logEvent("DOWNLOAD SUCCESSFUL" , "false");
+            }
+
             download(STATE.UNLOCK);
         }).start();
     }
@@ -264,16 +270,21 @@ public class MainActivity extends BridgeActivity {
         logEvent("PLAYLIST WAS SUCCESSFULLY SAVED TO CACHE", "false");
     }
 
-    public void downloadSingleMedia()  throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException {
-        createInfoSingleMedia(url, format);
+    public void downloadSingleMedia()  throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException{
+        //createInfoSingleMedia(url);
+
+        if (shouldStop.get()) {
+            logEvent("DOWNLOAD CANCELLED1", "warn");
+            throw new YoutubeDL.CanceledException();
+        }
 
         logEvent("TITLE : " + title + " EXTENSION : " + ext, "false");
         infLoad(50);
-        //create a primary request especially for downloading
-        //as the first one gets malformed
+            //create a primary request especially for downloading
+            //as the first one gets malformed
         YoutubeDLRequest request1 = new YoutubeDLRequest(url);
         request1.addOption("-f" ,formatFromJS);
-        request1.addOption("-o", loc + "/%(id)s.%(ext)s");
+        request1.addOption("-o", loc + "/%(id)s" + formatFromJS + ".%(ext)s");
         request1.addOption("--load-info-json", infoFile.getAbsolutePath());
         //request1.addOption("--extractor-args", TVClients);
 
@@ -289,14 +300,14 @@ public class MainActivity extends BridgeActivity {
             }
             return Unit.INSTANCE;
         });
-        callJsAudio(loc + "/" + id + "." + ext);
+        callJsAudio(loc + "/" + id + formatFromJS + "." + ext);
         System.out.println(response.getOut());
     }
-    public void createInfoSingleMedia(String url, String format) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
+    public void createInfoSingleMedia(String url) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
         //create a request for getting info about media
         YoutubeDLRequest request2 = new YoutubeDLRequest(url);
         //get info about the media with these args
-        request2.addOption("-f", format);
+        //request2.addOption("-f", format);
         request2.addOption("--dump-json");
         YoutubeDLResponse response2 = YoutubeDL.getInstance().execute(request2, pid, (progress, eta, message) -> {
             //logEvent(message, "warn");
@@ -315,14 +326,11 @@ public class MainActivity extends BridgeActivity {
         putValuesIntoOptions();
         syncVariables(true);
         render();
+        lock.drainPermits();
         lock.acquire();
 
         ext = formatNameSave;
 
-        if (shouldStop.get()) {
-            logEvent("DOWNLOAD CANCELLED1", "warn");
-            return;
-        }
         try (FileWriter infoFileWriter = new FileWriter(infoFile)) {
             infoFileWriter.write(response0);
         }
@@ -511,3 +519,10 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("putValuesIntoOptions()", null));
     }
 }
+
+/*
+todo
+cancelled button when "single media download select format" clicked causes errors(fixed)
+hide the format select conditionally
+format hide on error
+*/

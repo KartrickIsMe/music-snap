@@ -324,8 +324,15 @@ function putValuesIntoOptions() {
         jsonFormats = JSON.parse(formats);
         for(let i = 0; i < jsonFormats.length; i++) {
             let optionValue = document.createElement("option");
-            optionValue.textContent = jsonFormats[i].ext;
+            logEvent(jsonFormats[i].format_id + jsonFormats[i].acodec + jsonFormats[i].abr, "verbose");
+            if(jsonFormats[i].acodec === "none" || jsonFormats[i].acodec === "null") {
+                optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + " NO AUDIO";
+            } else {
+                let abrText = jsonFormats[i].abr == null ? "Unknown Audio" : jsonFormats[i].abr  + "kbps";
+                optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + "@" + abrText;
+            }
             optionValue.value = jsonFormats[i].format_id;
+            optionValue.dataset.extention = jsonFormats[i].ext;
             options.appendChild(optionValue);
         }
     }
@@ -333,7 +340,7 @@ function putValuesIntoOptions() {
 
 function sendChangedSignalToJavaForContinuingDownload() {
     let downloadFormat = options.querySelector("option:checked").value;
-    let formatNameSave = options.querySelector("option:checked").textContent;
+    let formatNameSave = options.querySelector("option:checked").dataset.extention;
     logEvent(downloadFormat);
     logEvent(formatNameSave);
     window.Android.receiveFormatFromJs(downloadFormat,formatNameSave);
