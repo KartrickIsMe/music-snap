@@ -525,4 +525,22 @@ todo
 cancelled button when "single media download select format" clicked causes errors(fixed)
 hide the format select conditionally
 format hide on error
+fix duplicate formats glitch when downloading second media
+change save to music text to save to downloads
+or maybe add a drop down to select dirrctory or storage access framework
+add a configuration page
+config.json goos idea.
+fix logging, add logging.
+clear button near url
+add a video player for formats with vcodec
+hide the audio/video player conditionally
+maybe embed a yt player for preview
+add full metadata, synced lyrics, captions to the downloaded song/video
+add a http getter for non-youtube/open videos.
+add cookie submit option in config
+maybe improve the ui
+playlist formats fix
+add a mini file browser for cache music
+improve load times(background update?)
+maybe daily user ping anonymous data
 */
