@@ -321,7 +321,6 @@ public class MainActivity extends BridgeActivity {
         logEvent(title + " " + id + " " + final_audio_loc + " " + formatNameSave, "verbose");
         values.put(MediaStore.Audio.Media.DISPLAY_NAME, title + format);
         values.put(MediaStore.Audio.Media.TITLE, title);
-        values.put(MediaStore.Audio.Media._ID, id);
         values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_audio_loc));
         values.put(MediaStore.Audio.Media.RELATIVE_PATH, deviceSaveLoc);
 
