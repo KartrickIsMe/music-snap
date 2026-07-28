@@ -599,11 +599,11 @@ public class MainActivity extends BridgeActivity {
 
 /*
 todo
-cancelled button when "single media download select format" clicked causes errors(fixed)
-hide the format select conditionally
-format hide on error
-fix duplicate formats glitch when downloading second media
-change save to music text to save to downloads
+-----------cancelled button when "single media download select format" clicked causes errors(fixed)
+------------hide the format select conditionally
+------------format hide on error
+-----------fix duplicate formats glitch when downloading second media(fixed)
+-----------change save to music text to save to device
 or maybe add a drop down to select directory or storage access framework
 add a configuration page
 config.json idea.
@@ -616,13 +616,14 @@ add full metadata, synced lyrics, captions to the downloaded song/video
 add a http getter for non-youtube/open videos.
 add cookie submit option in config
 maybe improve the ui
-playlist formats fix
+------------playlist formats fix
 add a mini file browser for cache music
 improve load times(background update?)
 maybe daily user ping anonymous data
 enhanced url check
 format listing for non yt videos
-fetch theming
+-------------fetch theming
 maybe ionic framework
 improve playlist downloading
+-------------add debug test button
 */

@@ -13,6 +13,13 @@ let testModeCanBeEnabled = true;
 appState.testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
 let formats;
+formats = `
+[
+    { "format_id": 0, "acodec": "[acodec]", "abr": "0", "ext": "[ext]", "resolution": "0x0" },
+    { "format_id": 1, "acodec": "[acodec]", "abr": "1", "ext": "[ext]", "resolution": "1x1" },
+    { "format_id": 2, "acodec": "[acodec]", "abr": "2", "ext": "[ext]", "resolution": "2x2" }
+]
+`;
 let oldFormats = "not null btw";
 //it's for testing interface in browser.
 
@@ -35,9 +42,11 @@ const appInterface = document.getElementById("appInterface");
 const appBody = document.getElementById("appBody");
 const background = document.getElementById("background");
 const options = document.getElementById("options");
+const errBtn = document.getElementById("errBtn");
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
+errBtn.hidden = true;
 
 window.render = function () {
     downloadAudio.disabled = appState.hasError || appState.isCancel;
@@ -60,6 +69,8 @@ window.render = function () {
         downloadAudio.addEventListener("click", sendToDownload);
         downloadAudio.style.backgroundColor = "";
         downloadAudio.textContent = defaultDownloadText;
+    } if(testModeCanBeEnabled) {
+        errBtn.hidden = false;
     }
 }
 
@@ -156,6 +167,9 @@ function onDownloadClick(url) {
         window.Android.downloadToCache(url);
     }
     else if(testMode == true) {
+       clearSelect();
+       putValuesIntoOptions();
+       options.hidden = false;
        logEventReplace("TEST DOWNLOAD : " + url);
     }
 }
@@ -249,6 +263,11 @@ loadAudio.addEventListener("click", onLoadClick);
 exitButton.addEventListener("click", exitPage);
 testModeEnable.addEventListener("click", enableTestMode);
 options.addEventListener("change", sendChangedSignalToJavaForContinuingDownload);
+errBtn.addEventListener("click", call_causeErrors);
+
+function call_causeErrors() {
+    call_causeErrors(true);
+}
 
 function sendToDownload() {
     let url = urlInput.value;
@@ -323,14 +342,17 @@ window.clearSelect = function() {
 
 function putValuesIntoOptions() {
     jsonFormats = JSON.parse(formats);
+
     for(let i = 0; i < jsonFormats.length; i++) {
         let optionValue = document.createElement("option");
-        logEvent(jsonFormats[i].format_id + jsonFormats[i].acodec + jsonFormats[i].abr, "verbose");
+
+        logEvent(jsonFormats[i].format_id + jsonFormats[i].acodec + jsonFormats[i].abr + jsonFormats[i].ext + jsonFormats[i].resolution, "verbose");
+
         if(jsonFormats[i].acodec === "none" || jsonFormats[i].acodec === "null") {
             optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + " NO AUDIO";
         } else {
             let abrText = jsonFormats[i].abr == null ? "Unknown Audio" : jsonFormats[i].abr  + "kbps";
-        optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + "@" + abrText;
+            optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + "@" + abrText;
         }
         optionValue.value = jsonFormats[i].format_id;
         optionValue.dataset.extention = jsonFormats[i].ext;
@@ -339,6 +361,8 @@ function putValuesIntoOptions() {
 }
 
 function sendChangedSignalToJavaForContinuingDownload() {
+    appState.optionsVisible = false;
+    render();
     let downloadFormat = options.querySelector("option:checked").value;
     let formatNameSave = options.querySelector("option:checked").dataset.extention;
     logEvent(downloadFormat);
