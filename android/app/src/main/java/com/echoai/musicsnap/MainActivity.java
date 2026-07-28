@@ -7,18 +7,22 @@ import com.getcapacitor.BridgeActivity;
 //suppress Js method errors in ide as they are not here
 import android.annotation.SuppressLint;
 //allow js to execute functions with this annotation
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Build;
 import android.webkit.JavascriptInterface;
 //preserve state of application e.g. when screen is rotated
 import android.os.Bundle;
-//import android.content.Context;
-
+import android.provider.MediaStore;
+import android.content.ContentValues;
 //file purpose
 import java.io.File;
-//import java.io.IOException;
+import android.os.Environment;
+import androidx.annotation.RequiresApi;
 
-//import com.yausername.youtubedl_android.YoutubeDLUpdater;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 //heart of media download
@@ -30,17 +34,14 @@ import com.yausername.youtubedl_android.YoutubeDLRequest;
 //receive the response from external sources
 import com.yausername.youtubedl_android.YoutubeDLResponse;
 //get information about the media to be downloaded
-//import com.yausername.youtubedl_android.mapper.VideoInfo;
 //quote the strings for JavaScript
 import org.json.JSONException;
 import org.json.JSONObject;
-
 //a function of the library returns this
 import kotlin.Unit;
 import java.io.FileWriter;
 //main activity of app
 public class MainActivity extends BridgeActivity {
-
     //store extension of the media
     String ext;
     //store ID of media
@@ -51,6 +52,7 @@ public class MainActivity extends BridgeActivity {
     String pid = "YT-" + System.currentTimeMillis();
     //store download location of media
     private String loc;
+    String final_audio_loc;
     public boolean isDownloading = false;
     //download related
     String url;
@@ -61,11 +63,9 @@ public class MainActivity extends BridgeActivity {
     File infoFile;
     String response0;
     AtomicBoolean shouldStop = new AtomicBoolean();
-
     boolean isDownloadFailed;
     String formatFromJS;
     String formats;
-
     String formatNameSave;
     Semaphore lock = new Semaphore(0);
 
@@ -78,11 +78,13 @@ public class MainActivity extends BridgeActivity {
         //call capacitor to create it's webview
         super.onCreate(savedInstanceState);
         //assign the location of the media to be downloaded
+        //seldom config
         loc = getCacheDir().getAbsolutePath() + "/music";
         infoFile = new File(loc, "infoFile.json");
         maxTries = 5;
         trial = 0;
         isDownloadFailed = false;
+        final_audio_loc = null;
         //fallback
         //format = "bestaudio[ext!=webm]/bestaudio";
         //add the JavaScript bride to "this" class with the name "Android"
@@ -300,9 +302,84 @@ public class MainActivity extends BridgeActivity {
             }
             return Unit.INSTANCE;
         });
-        callJsAudio(loc + "/" + id + formatFromJS + "." + ext);
+        final_audio_loc = loc + "/" + id + formatFromJS + "." + ext;
+        callJsAudio(final_audio_loc);
         System.out.println(response.getOut());
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    @JavascriptInterface
+    public void saveToDevice() {
+        String deviceSaveLoc = Environment.DIRECTORY_MUSIC;
+        File media = new File(final_audio_loc);
+        logEvent("SAVE LOC : " + deviceSaveLoc, "verbose");
+        if(final_audio_loc == null) {
+            logEvent("AUDIO CACHE PATH IS NULL", "verbose");
+            return;
+        }
+        ContentValues values = new ContentValues();
+        logEvent(title + " " + id + " " + final_audio_loc + " " + formatNameSave, "verbose");
+        values.put(MediaStore.Audio.Media.DISPLAY_NAME, title + format);
+        values.put(MediaStore.Audio.Media.TITLE, title);
+        values.put(MediaStore.Audio.Media._ID, id);
+        values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_audio_loc));
+        values.put(MediaStore.Audio.Media.RELATIVE_PATH, deviceSaveLoc);
+
+        Uri uri = getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
+        if(uri == null) {
+            logEvent("URI IS NULL", "true");
+            return;
+        }
+
+        try(FileInputStream read = new FileInputStream(media)) {
+            OutputStream write = getContentResolver().openOutputStream(uri);
+            read.transferTo(write);
+        } catch (IOException e) {
+            logEvent("FAILED TO SAVE SONG TO DEVICE : " + e.getMessage(), "true");
+        }
+        logEvent("MEDIA SUCCESSFULLY SAVED TO : " + deviceSaveLoc, "false");
+    }
+    String mimeTypeConverter(String format, String filePath) {
+        boolean isVideo = isVideo(filePath);
+        if(!isVideo) {
+            switch (format) {
+                case "m4a", "alac" -> format = "audio/mp4";
+                case "webm" -> format = "audio/webm";
+                case "mp3" -> format = "audio/mpeg";
+                case "wav" -> format = "audio/wav";
+                case "aac" -> format = "audio/aac";
+                case "ogg" -> format = "audio/ogg";
+                case "opus" -> format = "audio/opus";
+                default -> format = "audio/*";
+            }
+        } else {
+            switch (format) {
+                case "mp4" -> format = "video/mp4";
+                case "webm" -> format = "video/webm";
+                case "3gp" -> format = "video/3gpp";
+                case "mkv" -> format = "video/x-matroska";
+                case "avi" -> format = "video/x-msvideo";
+                case "flv" -> format = "video/x-flv";
+                default -> format = "video/*";
+            }
+        }
+        logEvent("SAVE MIMETYPE : " + format, "verbose");
+        return format;
+    }
+    boolean isVideo(String filePath) {
+        boolean isVideo = false;
+        try(MediaMetadataRetriever retriever = new MediaMetadataRetriever()) {
+            retriever.setDataSource(filePath);
+            String hasVideo = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO);
+            isVideo = "yes".equals(hasVideo);
+            retriever.release();
+        }
+        catch (IOException e) {
+            logEvent("CANNOT DETERMINE IF FILE IS VIDEO : " + e.getMessage(), "true");
+        }
+        return isVideo;
+    }
+
     public void createInfoSingleMedia(String url) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
         //create a request for getting info about media
         YoutubeDLRequest request2 = new YoutubeDLRequest(url);
@@ -315,7 +392,6 @@ public class MainActivity extends BridgeActivity {
         });
         JSONObject json = new JSONObject(response2.getOut());
         response0 = response2.getOut();
-        //create a VideoInfo object
         //assign the values to the identifiers
         title = json.getString("title");
         id = json.getString("id");
@@ -504,6 +580,7 @@ public class MainActivity extends BridgeActivity {
     public void syncVariables(String formats) {
         String safeFormats = JSONObject.quote(formats);
         //logEvent(safeFormats, "verbose");
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("clearSelect()", null));
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("syncVariables(" + safeFormats + ")", null));
     }
 
@@ -527,12 +604,12 @@ hide the format select conditionally
 format hide on error
 fix duplicate formats glitch when downloading second media
 change save to music text to save to downloads
-or maybe add a drop down to select dirrctory or storage access framework
+or maybe add a drop down to select directory or storage access framework
 add a configuration page
-config.json goos idea.
+config.json idea.
 fix logging, add logging.
 clear button near url
-add a video player for formats with vcodec
+add a video player for formats with VCODEC
 hide the audio/video player conditionally
 maybe embed a yt player for preview
 add full metadata, synced lyrics, captions to the downloaded song/video
@@ -543,4 +620,9 @@ playlist formats fix
 add a mini file browser for cache music
 improve load times(background update?)
 maybe daily user ping anonymous data
+enhanced url check
+format listing for non yt videos
+fetch theming
+maybe ionic framework
+improve playlist downloading
 */

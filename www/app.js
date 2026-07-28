@@ -162,7 +162,7 @@ function onDownloadClick(url) {
 
 function onSaveClick() {
     if (testMode == false) {
-        window.Android.saveToMusic();
+        window.Android.saveToDevice();
     }
     else {
         logEventReplace("TEST SAVE");
@@ -315,26 +315,26 @@ window.syncVariables = function(newFormats) {
     formats = newFormats;
 }
 
+window.clearSelect = function() {
+    const defaultAndFirstValue = options.options[0];
+    options.innerHTML = "";
+    options.appendChild(defaultAndFirstValue);
+}
+
 function putValuesIntoOptions() {
-    if(oldFormats === formats) {
-        return;
-    }
-    else {
-        oldFormats = formats;
-        jsonFormats = JSON.parse(formats);
-        for(let i = 0; i < jsonFormats.length; i++) {
-            let optionValue = document.createElement("option");
-            logEvent(jsonFormats[i].format_id + jsonFormats[i].acodec + jsonFormats[i].abr, "verbose");
-            if(jsonFormats[i].acodec === "none" || jsonFormats[i].acodec === "null") {
-                optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + " NO AUDIO";
-            } else {
-                let abrText = jsonFormats[i].abr == null ? "Unknown Audio" : jsonFormats[i].abr  + "kbps";
-                optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + "@" + abrText;
-            }
-            optionValue.value = jsonFormats[i].format_id;
-            optionValue.dataset.extention = jsonFormats[i].ext;
-            options.appendChild(optionValue);
+    jsonFormats = JSON.parse(formats);
+    for(let i = 0; i < jsonFormats.length; i++) {
+        let optionValue = document.createElement("option");
+        logEvent(jsonFormats[i].format_id + jsonFormats[i].acodec + jsonFormats[i].abr, "verbose");
+        if(jsonFormats[i].acodec === "none" || jsonFormats[i].acodec === "null") {
+            optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + " NO AUDIO";
+        } else {
+            let abrText = jsonFormats[i].abr == null ? "Unknown Audio" : jsonFormats[i].abr  + "kbps";
+        optionValue.textContent = jsonFormats[i].ext + " - " + jsonFormats[i].format_id + " - " + jsonFormats[i].resolution + "@" + abrText;
         }
+        optionValue.value = jsonFormats[i].format_id;
+        optionValue.dataset.extention = jsonFormats[i].ext;
+        options.appendChild(optionValue);
     }
 }
 
