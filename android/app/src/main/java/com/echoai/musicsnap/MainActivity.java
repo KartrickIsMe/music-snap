@@ -323,17 +323,20 @@ public class MainActivity extends BridgeActivity {
         values.put(MediaStore.Audio.Media.TITLE, title);
         values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_audio_loc));
         values.put(MediaStore.Audio.Media.RELATIVE_PATH, deviceSaveLoc);
-
-        Uri uri = getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
-        if(uri == null) {
-            logEvent("URI IS NULL", "true");
-            return;
-        }
-
-        try(FileInputStream read = new FileInputStream(media)) {
-            OutputStream write = getContentResolver().openOutputStream(uri);
-            read.transferTo(write);
+        try {
+            Uri uri = getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
+            if(uri == null) {
+                logEvent("URI IS NULL", "true");
+                return;
+            }
+    
+            try(FileInputStream read = new FileInputStream(media)) {
+                OutputStream write = getContentResolver().openOutputStream(uri);
+                read.transferTo(write);
+            }
         } catch (IOException e) {
+            logEvent("FAILED TO SAVE SONG TO DEVICE : " + e.getMessage(), "true");
+        } catch (Exception e) {
             logEvent("FAILED TO SAVE SONG TO DEVICE : " + e.getMessage(), "true");
         }
         logEvent("MEDIA SUCCESSFULLY SAVED TO : " + deviceSaveLoc, "false");
