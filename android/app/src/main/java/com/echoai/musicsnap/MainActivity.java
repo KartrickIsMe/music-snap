@@ -160,14 +160,6 @@ public class MainActivity extends BridgeActivity {
                     }
 
                 } else {
-
-                    //logEvent(formats, "verbose");
-                    //syncVariables(true);
-                    //syncVariables(formats);
-                    //putValuesIntoOptions();
-                    //render();
-                    //logEvent("SELECT DOWNLOAD FORMAT FOR SINGLE MEDIA", "warn");
-                    //lock.acquire();
                     if(shouldStop.get()) {
                         return;
                     } else {
@@ -188,10 +180,12 @@ public class MainActivity extends BridgeActivity {
                     inTrial = true;
                     trial++;
                     logEvent("RETRYING : "+trial+"/"+maxTries , "warn");
+                    downloadStalled();
                     isDownloading = false;
                     downloadToCache(this.url);
                 } else {
                     logEvent("DOWNLOAD FAILED, RETRY?", "warn");
+                    downloadStalled();
                     syncVariables(false);
                     render();
                     inTrial = false;
@@ -203,6 +197,7 @@ public class MainActivity extends BridgeActivity {
             catch (InterruptedException e) {
                 sendOnDownloadComplete(true);
                 logEvent("DOWNLOAD INTERRUPTED : " + e.getMessage(), "warn");
+                downloadStalled();
                 return;
             }
             catch (YoutubeDL.CanceledException e) {
@@ -211,10 +206,12 @@ public class MainActivity extends BridgeActivity {
                 trial = 0;
                 download(STATE.UNLOCK);
                 sendOnDownloadComplete(true);
+                downloadStalled();
                 return;
             } catch (IOException e) {
                 sendOnDownloadComplete(true);
                 logEvent("IO ERROR : " + e.getMessage(), "true");
+                causeErrors();
             }
             catch (Exception e) {
                 sendOnDownloadComplete(true);
@@ -236,9 +233,11 @@ public class MainActivity extends BridgeActivity {
             inTrial = false;
             if(!isDownloadFailed) {
                 sendOnDownloadComplete(false);
+                downloadSuccessful();
                 logEvent("DOWNLOAD SUCCESSFUL" , "false");
+            } else {
+                downloadStalled();
             }
-
             download(STATE.UNLOCK);
         }).start();
     }
@@ -319,7 +318,7 @@ public class MainActivity extends BridgeActivity {
         }
         ContentValues values = new ContentValues();
         logEvent(title + " " + id + " " + final_audio_loc + " " + formatNameSave, "verbose");
-        values.put(MediaStore.Audio.Media.DISPLAY_NAME, title + format);
+        values.put(MediaStore.Audio.Media.DISPLAY_NAME, title + formatFromJS);
         values.put(MediaStore.Audio.Media.TITLE, title);
         values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_audio_loc));
         values.put(MediaStore.Audio.Media.RELATIVE_PATH, deviceSaveLoc);
@@ -377,7 +376,7 @@ public class MainActivity extends BridgeActivity {
             retriever.release();
         }
         catch (IOException e) {
-            logEvent("CANNOT DETERMINE IF FILE IS VIDEO : " + e.getMessage(), "true");
+            logEvent("CANNOT DETERMINE IF FILE IS VIDEO OR AUDIO: " + e.getMessage(), "true");
         }
         return isVideo;
     }
@@ -597,35 +596,11 @@ public class MainActivity extends BridgeActivity {
     public void putValuesIntoOptions() {
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("putValuesIntoOptions()", null));
     }
+    
+    public void downloadSuccessful() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadSuccessful()", null));
+    }
+    
+    public void downloadStalled() {                                                                                  runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadStalled()", null));       
+    }
 }
-
-/*
-todo
------------cancelled button when "single media download select format" clicked causes errors(fixed)
-------------hide the format select conditionally
-------------format hide on error
------------fix duplicate formats glitch when downloading second media(fixed)
------------change save to music text to save to device
-or maybe add a drop down to select directory or storage access framework
-add a configuration page
-config.json idea.
-fix logging, add logging.
-clear button near url
-add a video player for formats with VCODEC
-hide the audio/video player conditionally
-maybe embed a yt player for preview
-add full metadata, synced lyrics, captions to the downloaded song/video
-add a http getter for non-youtube/open videos.
-add cookie submit option in config
-maybe improve the ui
-------------playlist formats fix
-add a mini file browser for cache music
-improve load times(background update?)
-maybe daily user ping anonymous data
-enhanced url check
-format listing for non yt videos
--------------fetch theming
-maybe ionic framework
-improve playlist downloading
--------------add debug test button
-*/

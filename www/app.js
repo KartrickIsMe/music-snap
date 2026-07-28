@@ -6,10 +6,11 @@ const appState = {
     testMode: false,
     isCancel: false,
     optionsVisible: false,
+    isSaveable: false,
 }
 
 //don't enable for production!
-let testModeCanBeEnabled = true;
+let testModeCanBeEnabled = false;
 appState.testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
 let formats;
@@ -43,6 +44,7 @@ const appBody = document.getElementById("appBody");
 const background = document.getElementById("background");
 const options = document.getElementById("options");
 const errBtn = document.getElementById("errBtn");
+saveAudio.hidden = true;
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
@@ -51,6 +53,7 @@ errBtn.hidden = true;
 window.render = function () {
     downloadAudio.disabled = appState.hasError || appState.isCancel;
     saveAudio.disabled = appState.hasError;
+    saveAudio.hidden = !appState.isSaveable;
     loadAudio.hidden = !appState.testMode;
     testMode = appState.testMode;
     options.hidden = !appState.optionsVisible || appState.hasError ;
@@ -368,6 +371,16 @@ function sendChangedSignalToJavaForContinuingDownload() {
     logEvent(downloadFormat);
     logEvent(formatNameSave);
     window.Android.receiveFormatFromJs(downloadFormat,formatNameSave);
+}
+
+window.downloadSuccessful = function() {
+    appState.isSaveable = true;
+    render();
+}
+
+window.downloadStalled = function() {
+    appState.isSaveable = false;
+    render();
 }
 
 jsIsReady();
