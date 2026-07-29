@@ -30,3 +30,4 @@ improve playlist downloading
 fix showing null in file name after saving
 change download Audio text
 save info.json for refetch per song
+add a clear log button
