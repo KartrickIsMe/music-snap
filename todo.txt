@@ -28,3 +28,5 @@ maybe ionic framework
 improve playlist downloading
 -------------add debug test button
 fix showing null in file name after saving
+change download Audio text
+save info.json for refetch per song
