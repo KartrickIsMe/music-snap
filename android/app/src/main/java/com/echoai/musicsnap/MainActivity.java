@@ -52,7 +52,7 @@ public class MainActivity extends BridgeActivity {
     String pid = "YT-" + System.currentTimeMillis();
     //store download location of media
     private String loc;
-    String final_audio_loc;
+    String final_media_loc;
     public boolean isDownloading = false;
     //download related
     String url;
@@ -68,7 +68,7 @@ public class MainActivity extends BridgeActivity {
     String formats;
     String formatNameSave;
     Semaphore lock = new Semaphore(0);
-
+    boolean cached_isVideo;
     //suppress js errors in ide
     @SuppressLint("JavascriptInterface")
     //execute this method before parent class
@@ -84,7 +84,7 @@ public class MainActivity extends BridgeActivity {
         maxTries = 5;
         trial = 0;
         isDownloadFailed = false;
-        final_audio_loc = null;
+        final_media_loc = null;
         //fallback
         //format = "bestaudio[ext!=webm]/bestaudio";
         //add the JavaScript bride to "this" class with the name "Android"
@@ -301,30 +301,48 @@ public class MainActivity extends BridgeActivity {
             }
             return Unit.INSTANCE;
         });
-        final_audio_loc = loc + "/" + id + formatFromJS + "." + ext;
-        callJsAudio(final_audio_loc);
+        final_media_loc = loc + "/" + id + formatFromJS + "." + ext;
+        if(isVideo(final_media_loc)) {
+            logEvent("isVideo is true", "verbose");
+            callJsVideo(final_media_loc);
+        } else {
+            logEvent("isVideo is false", "verbose");
+            callJsAudio(final_media_loc);
+        }
         System.out.println(response.getOut());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @JavascriptInterface
     public void saveToDevice() {
-        String deviceSaveLoc = Environment.DIRECTORY_MUSIC;
-        File media = new File(final_audio_loc);
-        logEvent("SAVE LOC : " + deviceSaveLoc, "verbose");
-        if(final_audio_loc == null) {
+        if(final_media_loc == null) {
             logEvent("AUDIO CACHE PATH IS NULL", "verbose");
             return;
         }
+        isVideo(final_media_loc);
+        logEvent("FINAL MEDIA LOCATION : " + final_media_loc, "verbose");
+        String deviceSaveLoc;
+        File media = new File(final_media_loc);
         ContentValues values = new ContentValues();
-        logEvent(title + " " + id + " " + final_audio_loc + " " + formatNameSave, "verbose");
-        values.put(MediaStore.Audio.Media.DISPLAY_NAME, title + formatFromJS);
-        values.put(MediaStore.Audio.Media.TITLE, title);
-        values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_audio_loc));
-        values.put(MediaStore.Audio.Media.RELATIVE_PATH, deviceSaveLoc);
+        logEvent(title + " " + id + " " + final_media_loc + " " + formatNameSave, "verbose");
+        if(cached_isVideo) {
+            deviceSaveLoc = Environment.DIRECTORY_MOVIES;
+            values.put(MediaStore.Video.Media.RELATIVE_PATH, deviceSaveLoc);
+            CV_Video(values);
+        } else {
+            deviceSaveLoc = Environment.DIRECTORY_MUSIC;
+            values.put(MediaStore.Audio.Media.RELATIVE_PATH, deviceSaveLoc);
+            CV_Audio(values);
+        }
+        logEvent("SAVE LOC : " + deviceSaveLoc, "verbose");
         try {
-            Uri uri = getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
-            if(uri == null) {
+            Uri uri;
+            if(cached_isVideo) {
+                uri = getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+            }
+            else {
+                uri = getContentResolver().insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
+            } if(uri == null) {
                 logEvent("URI IS NULL", "true");
                 return;
             }
@@ -333,12 +351,22 @@ public class MainActivity extends BridgeActivity {
                 OutputStream write = getContentResolver().openOutputStream(uri);
                 read.transferTo(write);
             }
-        } catch (IOException e) {
-            logEvent("FAILED TO SAVE SONG TO DEVICE : " + e.getMessage(), "true");
         } catch (Exception e) {
-            logEvent("FAILED TO SAVE SONG TO DEVICE : " + e.getMessage(), "true");
+            logEvent("FAILED TO SAVE MEDIA TO DEVICE : " + e.getMessage(), "true");
+            return;
         }
         logEvent("MEDIA SUCCESSFULLY SAVED TO : " + deviceSaveLoc, "false");
+    }
+
+    void CV_Video(ContentValues values) {
+        values.put(MediaStore.Video.Media.DISPLAY_NAME, title + formatFromJS);
+        values.put(MediaStore.Video.Media.TITLE, title);
+        values.put(MediaStore.Video.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_media_loc));
+    }
+    void CV_Audio(ContentValues values) {
+        values.put(MediaStore.Audio.Media.DISPLAY_NAME, title + formatFromJS);
+        values.put(MediaStore.Audio.Media.TITLE, title);
+        values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypeConverter(formatNameSave, final_media_loc));
     }
     String mimeTypeConverter(String format, String filePath) {
         boolean isVideo = isVideo(filePath);
@@ -368,6 +396,7 @@ public class MainActivity extends BridgeActivity {
         return format;
     }
     boolean isVideo(String filePath) {
+        cached_isVideo = false;
         boolean isVideo = false;
         try(MediaMetadataRetriever retriever = new MediaMetadataRetriever()) {
             retriever.setDataSource(filePath);
@@ -378,6 +407,7 @@ public class MainActivity extends BridgeActivity {
         catch (IOException e) {
             logEvent("CANNOT DETERMINE IF FILE IS VIDEO OR AUDIO: " + e.getMessage(), "true");
         }
+        cached_isVideo = isVideo;
         return isVideo;
     }
 
@@ -425,6 +455,11 @@ public class MainActivity extends BridgeActivity {
     public void callJsAudio(String fileLoc) {
         String safeFileLoc = JSONObject.quote(fileLoc);
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("onLoadClick("+ safeFileLoc +")", null));
+    }
+
+    public void callJsVideo(String fileLoc) {
+        String safeFileLoc = JSONObject.quote(fileLoc);
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("playVideo(" + safeFileLoc + ")", null));
     }
 
     //After the frontend has loaded.
@@ -601,6 +636,7 @@ public class MainActivity extends BridgeActivity {
         runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadSuccessful()", null));
     }
     
-    public void downloadStalled() {                                                                                  runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadStalled()", null));       
+    public void downloadStalled() {
+        runOnUiThread(() -> getBridge().getWebView().evaluateJavascript("downloadStalled()", null));
     }
 }

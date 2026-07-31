@@ -52,6 +52,11 @@ body {
   max-width: 400px;
 }
 
+#videoPlayer {
+  width: 100%;
+  max-width: 400px;
+}
+
 button {
   width: 100%;
   max-width: 400px;

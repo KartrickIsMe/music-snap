@@ -10,9 +10,10 @@ const appState = {
 }
 
 //don't enable for production!
-let testModeCanBeEnabled = false;
+let testModeCanBeEnabled = true;
 appState.testMode = false;
 const testAudioPath = "./testMode/audio.mp3";
+const testVideoPath = "./testMode/video.mp4";
 let formats;
 formats = `
 [
@@ -25,13 +26,15 @@ let oldFormats = "not null btw";
 //it's for testing interface in browser.
 
 let extention = "bestaudio[ext!=webm]/bestaudio";
-let defaultDownloadText = "Download Audio";
+
 //let downloadAudioCanBeEnabled = false;
 
 const urlInput = document.getElementById("urlInput");
 const audioPlayer = document.getElementById("audioPlayer");
+const videoPlayer = document.getElementById("videoPlayer");
 const statusDiv = document.getElementById("statusDiv");
 const loadAudio = document.getElementById("loadAudio");
+const loadVideo = document.getElementById("loadVideo");
 const saveAudio = document.getElementById("saveAudio");
 const downloadAudio = document.getElementById("downloadAudio");
 const exitArea = document.getElementById("exitP");
@@ -48,13 +51,16 @@ saveAudio.hidden = true;
 exitArea.hidden = true;
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
+videoPlayer.style.display = "none";
 errBtn.hidden = true;
+let defaultDownloadText = downloadAudio.textContent;
 
 window.render = function () {
     downloadAudio.disabled = appState.hasError || appState.isCancel;
     saveAudio.disabled = appState.hasError;
     saveAudio.hidden = !appState.isSaveable;
     loadAudio.hidden = !appState.testMode;
+    loadVideo.hidden = !appState.testMode;
     testMode = appState.testMode;
     options.hidden = !appState.optionsVisible || appState.hasError ;
     if(appState.isCancel) {
@@ -245,6 +251,31 @@ window.onLoadClick = async function (nativeFilePath) {
     }
 }
 
+window.playVideo = async function(nativeFilePath) {
+    videoPlayer.style.display = "";
+    if(testMode == false) {
+        try {
+            webFilePath = Capacitor.convertFileSrc(nativeFilePath);
+            logEvent(webFilePath);
+            if(nativeFilePath) {
+                videoPlayer.src = webFilePath;
+                await videoPlayer.load();
+            }
+            else {
+                logEventReplace("Video not found", true);
+            }
+        }
+        catch(e) {
+            logEventReplace(e.message, true);
+        }
+    }
+    else {
+        videoPlayer.src = testVideoPath;
+        videoPlayer.load();
+        logEventReplace("TEST VIDEO", false);
+    }
+}
+
 /*
 function wait(timeMs) {
     return new Promise();
@@ -263,6 +294,7 @@ downloadAudio.addEventListener("click", sendToDownload);
 downloadAudio.textContent = defaultDownloadText;
 saveAudio.addEventListener("click", onSaveClick);
 loadAudio.addEventListener("click", onLoadClick);
+loadVideo.addEventListener("click", playVideo);
 exitButton.addEventListener("click", exitPage);
 testModeEnable.addEventListener("click", enableTestMode);
 options.addEventListener("change", sendChangedSignalToJavaForContinuingDownload);
