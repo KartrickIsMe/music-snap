@@ -2,13 +2,16 @@
 <html>
     <head>
         <link rel="stylesheet" href="style.css">
-        <title>Audio Downloader</title>
+        <title>Media Downloader</title>
     </head>
     <body id="appBody">
         <div id="background"></div>
         <div id="appInterface">
             <span style="color: red">PLAYLIST SUPPORT IS INCOMPLETE</span>
-            <input id="urlInput" placeholder="Enter the URL to download audio">
+            <div class="urlRow">
+                <input id="urlInput" placeholder="Enter the URL from which to download">
+                <button id="clearBtn">X</button>
+            </div>
             <video id="videoPlayer" controls></video>
             <audio id="audioPlayer" controls></audio>
             <select id="options" required>

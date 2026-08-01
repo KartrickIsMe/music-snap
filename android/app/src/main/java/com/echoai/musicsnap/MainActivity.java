@@ -302,7 +302,8 @@ public class MainActivity extends BridgeActivity {
             return Unit.INSTANCE;
         });
         final_media_loc = loc + "/" + id + formatFromJS + "." + ext;
-        if(isVideo(final_media_loc)) {
+        isVideo(final_media_loc);
+        if(cached_isVideo) {
             logEvent("isVideo is true", "verbose");
             callJsVideo(final_media_loc);
         } else {
@@ -319,7 +320,6 @@ public class MainActivity extends BridgeActivity {
             logEvent("AUDIO CACHE PATH IS NULL", "verbose");
             return;
         }
-        isVideo(final_media_loc);
         logEvent("FINAL MEDIA LOCATION : " + final_media_loc, "verbose");
         String deviceSaveLoc;
         File media = new File(final_media_loc);

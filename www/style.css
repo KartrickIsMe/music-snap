@@ -1,170 +1,317 @@
 /* THIS IS VIBE CODED, me too lazy to learn css*/
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+
+
+/*
+  Design: phosphor-terminal / signal-receiver aesthetic.
+  Amber-on-black monospace, faint scanlines. Same tokens as the
+  embedded version — adapted to this HTML's original structure
+  (no header/EQ bars or notice wrapper markup here to hook into).
+*/
+
+:root {
+    --bg: #0a0908;
+    --panel: #16130f;
+    --panel-line: #2b2419;
+    --amber: #ffb300;
+    --amber-dim: #7a5a1a;
+    --amber-faint: #4a3a1a;
+    --text: #e9dfc8;
+    --text-dim: #9a8f75;
+    --danger: #ff5a4d;
+    --danger-dim: #4a2420;
 }
 
-button, input {
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button, input, select {
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    font-family: inherit;
+}
+
+html, body {
+    background: var(--bg);
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 16px;
-  background: #121212;
-  color: #eee;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 16px 40px;
+    color: var(--text);
+    font-family: "IBM Plex Mono", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    position: relative;
+    overflow-x: hidden;
+}
+
+#appInterface, #statusDiv, #exitP {
+    position: relative;
+    z-index: 1;
 }
 
 #appInterface {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    max-width: 420px;
+}
+
+/* the "PLAYLIST SUPPORT IS INCOMPLETE" span — only inline style is
+   color:red, so color needs !important to win over it; everything
+   else (background, border, spacing) layers on top normally */
+#appInterface span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid var(--danger-dim);
+    background: rgba(255, 90, 77, 0.07);
+    color: var(--danger) !important;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: 4px;
 }
 
 #urlInput {
-  width: 100%;
-  max-width: 400px;
-  padding: 12px 14px;
-  font-size: 16px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #1e1e1e;
-  color: #fff;
+    width: 100%;
+    padding: 13px 14px;
+    font-size: 14px;
+    border: 1px solid var(--panel-line);
+    border-radius: 4px;
+    background: var(--panel);
+    color: var(--text);
+    letter-spacing: 0.01em;
+}
+
+#urlInput::placeholder {
+    color: var(--text-dim);
 }
 
 #urlInput:focus {
-  outline: none;
-  border-color: #6c5ce7;
-}
-
-#audioPlayer {
-  width: 100%;
-  max-width: 400px;
-}
-
-#videoPlayer {
-  width: 100%;
-  max-width: 400px;
-}
-
-button {
-  width: 100%;
-  max-width: 400px;
-  padding: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  background: #6c5ce7;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.1s ease;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-button:hover {
-  background: #5a4bd1;
-}
-
-button:active {
-  background: #4c3fc0;
-}
-
-button:disabled {
-  background: #333;
-  color: #777;
-  cursor: not-allowed;
-}
-
-#downloadAudio:disabled {
-  background: #2d1010;
-  color: #635d5d;
-  cursor: not-allowed;
-}
-
-#statusDiv {
-  width: 100%;
-  max-width: 400px;
-  min-height: 100px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 10px 12px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  font-family: "Courier New", monospace;
-  font-size: 13px;
-}
-
-#statusDiv p {
-  margin: 4px 0;
-  word-break: break-word;
-}
-
-#exitP {
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  margin: 0;
-}
-
-#exitB {
-  width: auto;
-  padding: 8px 16px;
-  background: #d63031;
-}
-
-#exitB:hover {
-  background: #b52a2a;
-}
-
-#testModeEnable {
-  width: auto;
-  padding: 8px 16px;
-  background: #444;
-}
-
-#testModeEnable:hover {
-  background: #555;
-}
-
-#OR_text {
-  color: #888;
-  font-size: 14px;
-}
-
-#background {
-  position: fixed;
-  width: 100%;
-  height: 0%;
-  left: 0;
-  bottom: 0;
-  pointer-events: none;
-  background: rgb(142, 145, 142);
-  opacity: 0.3;
-  z-index: -1;
-  transition: height 1s ease, opacity 1s ease;
+    outline: 2px solid var(--amber);
+    outline-offset: 1px;
+    border-color: var(--amber);
 }
 
 select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--panel-line);
+    border-radius: 4px;
+    background: var(--amber);
+    color: black;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--amber-dim) 50%),
+        linear-gradient(135deg, var(--amber-dim) 50%, transparent 50%);
+    background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
+select:focus {
+    outline: 2px solid var(--amber);
+    outline-offset: 1px;
+}
+
+#videoPlayer, #audioPlayer {
+    width: 100%;
+    border-radius: 4px;
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+}
+
+#videoPlayer {
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+}
+
+#audioPlayer {
+    height: 40px;
+}
+
+#videoPlayer:not([src]), #audioPlayer:not([src]) {
+    opacity: 0.35;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, transform 0.05s ease;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+#loadAudio, #loadVideo, #downloadAudio, #saveAudio {
+    background: var(--amber);
+    color: #1a1200;
+}
+
+#loadAudio:hover, #loadVideo:hover, #downloadAudio:hover, #saveAudio:hover {
+    background: #ffc433;
+}
+
+#loadAudio:active, #loadVideo:active, #downloadAudio:active, #saveAudio:active {
+    background: #e6a200;
+}
+
+button:disabled {
+    background: var(--panel) !important;
+    color: var(--text-dim) !important;
+    border-color: var(--panel-line) !important;
+    cursor: not-allowed;
+}
+
+#errBtn {
+    background: transparent;
+    border: 1px dashed var(--amber-faint);
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 9px;
+}
+
+#errBtn:hover {
+    border-color: var(--amber-dim);
+    color: var(--amber-dim);
+}
+
+#statusDiv {
+    width: 100%;
+    max-width: 420px;
+    min-height: 90px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    background: #0d0b08;
+    border: 1px solid var(--panel-line);
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--amber-dim);
+}
+
+#statusDiv::before {
+    content: "// STATUS";
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+#statusDiv p {
+    margin: 3px 0;
+    word-break: break-word;
+    color: var(--text);
+}
+
+#statusDiv::-webkit-scrollbar {
+    width: 6px;
+}
+
+#statusDiv::-webkit-scrollbar-thumb {
+    background: var(--amber-faint);
+    border-radius: 3px;
+}
+
+#exitP {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+}
+
+#exitB, #testModeEnable {
+    width: auto;
+    padding: 9px 18px;
+    font-size: 12px;
+}
+
+#exitB {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+#exitB:hover {
+    background: rgba(255, 90, 77, 0.1);
+}
+
+#testModeEnable {
+    background: transparent;
+    border: 1px solid var(--panel-line);
+    color: var(--text-dim);
+}
+
+#testModeEnable:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+}
+
+#OR_text {
+    color: var(--text-dim);
+    font-size: 11px;
+}
+
+#background {
+    position: fixed;
+    width: 100%;
+    height: 0%;
+    left: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(255, 179, 0, 0.541), transparent);
+    opacity: 1;
+    z-index: 0;
+    transition: height 1s ease, opacity 1s ease;
+}
+
+:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+}
+
+.urlRow {
+  display: flex;
+  gap: 8px;
   width: 100%;
-  border-radius: 8px;
-  max-width: 400px;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  background: yellow;
-  cursor: pointer;
+}
+
+.urlRow #urlInput {
+  flex: 1;
+}
+
+.urlRow button {
+  color: #ff5a4d;
+  background: #1b0e0c;
+  width: auto;
+  padding: 13px 16px;
+  white-space: nowrap;
 }

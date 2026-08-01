@@ -47,13 +47,15 @@ const appBody = document.getElementById("appBody");
 const background = document.getElementById("background");
 const options = document.getElementById("options");
 const errBtn = document.getElementById("errBtn");
+const clearBtn = document.getElementById("clearBtn");
 saveAudio.hidden = true;
-exitArea.hidden = true;
+exitArea.style.display = "none";
 appInterface.hidden = false;
 audioPlayer.style.display = "none";
 videoPlayer.style.display = "none";
 errBtn.hidden = true;
 let defaultDownloadText = downloadAudio.textContent;
+clearBtn.style.display = "none";
 
 window.render = function () {
     downloadAudio.disabled = appState.hasError || appState.isCancel;
@@ -138,7 +140,7 @@ function exitPage() {
 
 function exitState(state) {
     let newState = !state;
-    exitArea.hidden = newState;
+    exitArea.style.display = state ? "" : "none";
 }
 
 function causeErrors(isError) {
@@ -225,9 +227,28 @@ function enableAllButtons() {
 }
 */
 
+function disableVideo() {
+    videoPlayer.pause();
+    videoPlayer.removeAttribute("src");
+    videoPlayer.src = "";
+    videoPlayer.load();
+    videoPlayer.hidden = true;
+}
+
+function disableAudio() {
+    audioPlayer.pause();
+    audioPlayer.removeAttribute("src");
+    audioPlayer.src = "";
+    audioPlayer.load();
+    audioPlayer.hidden = true;
+}
+
 //aka audio player, android callable
 window.onLoadClick = async function (nativeFilePath) {
+    videoPlayer.style.display = "none";
+    disableVideo();
     audioPlayer.style.display = "";
+    audioPlayer.hidden = false;
     if(testMode == false) {
         try {
             webFilePath = Capacitor.convertFileSrc(nativeFilePath);
@@ -252,6 +273,8 @@ window.onLoadClick = async function (nativeFilePath) {
 }
 
 window.playVideo = async function(nativeFilePath) {
+    disableAudio();
+    videoPlayer.hidden = false;
     videoPlayer.style.display = "";
     if(testMode == false) {
         try {
@@ -299,6 +322,23 @@ exitButton.addEventListener("click", exitPage);
 testModeEnable.addEventListener("click", enableTestMode);
 options.addEventListener("change", sendChangedSignalToJavaForContinuingDownload);
 errBtn.addEventListener("click", call_causeErrors);
+urlInput.addEventListener("input", checkInputValue)
+clearBtn.addEventListener("click", clearUrl);
+
+function clearUrl() {
+    urlInput.value = "";
+    checkInputValue();
+    urlInput.focus();
+}
+
+function checkInputValue() {
+    const hasContent = urlInput.value.trim().length > 0;
+    if(hasContent) {
+        clearBtn.style.display = ""
+    } else {
+        clearBtn.style.display = "none"
+    }
+}
 
 function call_causeErrors() {
     call_causeErrors(true);
