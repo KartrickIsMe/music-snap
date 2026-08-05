@@ -35,6 +35,7 @@ import com.yausername.youtubedl_android.YoutubeDLRequest;
 import com.yausername.youtubedl_android.YoutubeDLResponse;
 //get information about the media to be downloaded
 //quote the strings for JavaScript
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 //a function of the library returns this
@@ -156,6 +157,7 @@ public class MainActivity extends BridgeActivity {
                     if(shouldStop.get()) {
                         return;
                     } else {
+                        createInfoMultiMedia(url);
                         downloadPlaylist();
                     }
 
@@ -269,6 +271,25 @@ public class MainActivity extends BridgeActivity {
         });
         System.out.println(response3.getOut());
         logEvent("PLAYLIST WAS SUCCESSFULLY SAVED TO CACHE", "false");
+    }
+
+    void createInfoMultiMedia(String url) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
+        YoutubeDLRequest playlistReq = new YoutubeDLRequest(url);
+        playlistReq.addOption("--dump-single-json");
+        playlistReq.addOption("--skip-download");
+        YoutubeDLResponse playlistRes = YoutubeDL.getInstance().execute(playlistReq, pid , (progress, eta, message) -> {
+            logEvent("PLAYLIST REQUEST EXECUTED", "false");
+            //leave it
+            return Unit.INSTANCE;
+        });
+        String jsonDump = playlistRes.getOut();
+        JSONObject root = new JSONObject(jsonDump);
+        JSONArray entries = root.getJSONArray("entries");
+        for(int i = 0; i < entries.length(); i++) {
+            JSONObject entry = entries.getJSONObject(i);
+            title = entry.getString("title");
+            logEvent(title, "false");
+        }
     }
 
     public void downloadSingleMedia()  throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException{
@@ -412,6 +433,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     public void createInfoSingleMedia(String url) throws IOException, YoutubeDLException, YoutubeDL.CanceledException , InterruptedException, JSONException{
+        if(true);
         //create a request for getting info about media
         YoutubeDLRequest request2 = new YoutubeDLRequest(url);
         //get info about the media with these args

@@ -1,34 +1,41 @@
-todo
+TODO : 
+
+fix playlist support
+fix logging, add logging.
+sharing options for app.
+add full metadata, synced lyrics, captions to the downloaded song/video
+or maybe add a drop down to select directory or storage access framework
+enhanced url check and log what is wrong
+add a configuration page
+add cookie submit option in config
+config.json idea.
+improve load times(background update?)
+
+DONE:
+
 -----------cancelled button when "single media download select format" clicked causes errors(fixed)
 ------------hide the format select conditionally
 ------------format hide on error
 -----------fix duplicate formats glitch when downloading second media(fixed)
 -----------change save to music text to save to device
-or maybe add a drop down to select directory or storage access framework
-add a configuration page
-config.json idea.
-fix logging, add logging.
 ---------------clear button near url
 ---------------add a video player for formats with VCODEC
-hide the audio/video player conditionally
-################maybe embed a yt player for preview
-add full metadata, synced lyrics, captions to the downloaded song/video
-add a http getter for non-youtube/open videos.
-add cookie submit option in config
+----------------hide the audio/video player conditionally
+--------------add a clear log button
+--------------add clear url button
 ------------maybe improve the ui
 ------------playlist formats fix
-add a mini file browser for cache music
-improve load times(background update?)
-maybe daily user ping anonymous data
-enhanced url check
-format listing for non yt videos
+-------------------format listing for non yt videos
 -------------fetch theming
-maybe ionic framework
-improve playlist downloading
 -------------add debug test button
 -------------fix showing null in file name after saving
 --------------change download Audio text
+
+CANCELLED OR STALLED IDEAS
+
+################maybe embed a yt player for preview
+##################add a http getter for non-youtube/open videos.
+##########add a mini file browser for cache music
+###################maybe daily user ping anonymous data
+################maybe ionic framework
 ##############save info.json for refetch per song
-add a clear log button
---------------add clear url button
-sharing options for app.

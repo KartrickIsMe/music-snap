@@ -1,0 +1,148 @@
+{
+    "id": "PLYCXuVfDMlEU",
+    "title": "test",
+    "availability": "public",
+    "channel_follower_count": null,
+    "description": "test",
+    "tags": [],
+    "thumbnails": [
+        {
+            "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEWCKgBEF5IWvKriqkDCQgBFQAAiEIYAQ==&rs=AOn4CLCom3S2jAgJAHj5V2GcPd5rz1SgNA",
+            "height": 94,
+            "width": 168,
+            "id": "0",
+            "resolution": "168x94"
+        },
+        {
+            "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEWCMQBEG5IWvKriqkDCQgBFQAAiEIYAQ==&rs=AOn4CLCpTx9j_ufzf6d5rv9wd8akavLCeg",
+            "height": 110,
+            "width": 196,
+            "id": "1",
+            "resolution": "196x110"
+        },
+        {
+            "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEXCPYBEIoBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB00LUmVPPoekARxMnCWZ9SiUfL9Q",
+            "height": 138,
+            "width": 246,
+            "id": "2",
+            "resolution": "246x138"
+        },
+        {
+            "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLDw9v5H7VFbMJ4-kMTaX_Vqf5qL3w",
+            "height": 188,
+            "width": 336,
+            "id": "3",
+            "resolution": "336x188"
+        }
+    ],
+    "modified_date": "20260802",
+    "view_count": 0,
+    "playlist_count": 2,
+    "channel": "Kartrick",
+    "channel_id": "UC-jgRXi_Y1jFCTt7VxgqWcA",
+    "uploader_id": "@KartrickIzMe",
+    "uploader": "Kartrick",
+    "channel_url": "https://www.youtube.com/channel/UC-jgRXi_Y1jFCTt7VxgqWcA",
+    "uploader_url": "https://www.youtube.com/@KartrickIzMe",
+    "_type": "playlist",
+    "entries": [
+        {
+            "title": "Left-Right Stereo Test",
+            "thumbnails": [
+                {
+                    "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLDidfzmYbY0gZafYNfbA_sqBTHYfA",
+                    "height": 94,
+                    "width": 168
+                },
+                {
+                    "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLBGLmeyzFXa4DMCd0E5YSjOxcVVGw",
+                    "height": 110,
+                    "width": 196
+                },
+                {
+                    "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCzbq95zfgbymIsFhWskNAoJfVnFA",
+                    "height": 138,
+                    "width": 246
+                },
+                {
+                    "url": "https://i.ytimg.com/vi/b2je8uBlgFM/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC1JJ_fbBd60gyo_2YQsqDzMaRtEQ",
+                    "height": 188,
+                    "width": 336
+                }
+            ],
+            "duration": 24,
+            "view_count": 848000,
+            "timestamp": null,
+            "live_status": null,
+            "availability": null,
+            "channel_url": "https://www.youtube.com/channel/UCnJk9mmcKpBN8hlxyjRDj9Q",
+            "uploader_url": null,
+            "creators": null,
+            "channel": "myNoise \u2022 Focus \u2022 Relax \u2022 Sleep",
+            "channel_id": "UCnJk9mmcKpBN8hlxyjRDj9Q",
+            "uploader": "myNoise \u2022 Focus \u2022 Relax \u2022 Sleep",
+            "ie_key": "Youtube",
+            "id": "b2je8uBlgFM",
+            "_type": "url",
+            "url": "https://music.youtube.com/watch?v=b2je8uBlgFM",
+            "__x_forwarded_for_ip": null
+        },
+        {
+            "title": "All Maps OST (Syndicate Edition) | Standoff 2",
+            "thumbnails": [
+                {
+                    "url": "https://i.ytimg.com/vi/7wFTioXLw60/hqdefault.jpg?sqp=-oaymwEbCKgBEF5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLCw3aSrVZD5HqOJUXETA5OpbNOfgA",
+                    "height": 94,
+                    "width": 168
+                },
+                {
+                    "url": "https://i.ytimg.com/vi/7wFTioXLw60/hqdefault.jpg?sqp=-oaymwEbCMQBEG5IVfKriqkDDggBFQAAiEIYAXABwAEG&rs=AOn4CLB3U8vkOmHrANPIshfHQdCyYeIp0A",
+                    "height": 110,
+                    "width": 196
+                },
+                {
+                    "url": "https://i.ytimg.com/vi/7wFTioXLw60/hqdefault.jpg?sqp=-oaymwEcCPYBEIoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAGPYTfJ3OsyMo5VDceeijKUphOlg",
+                    "height": 138,
+                    "width": 246
+                },
+                {
+                    "url": "https://i.ytimg.com/vi/7wFTioXLw60/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBTQGmKAn-jqpkKV-1dvl8FExXbvA",
+                    "height": 188,
+                    "width": 336
+                }
+            ],
+            "duration": 94,
+            "view_count": 12000,
+            "timestamp": null,
+            "live_status": null,
+            "availability": null,
+            "channel_url": "https://www.youtube.com/channel/UCkkukl03ZasEzHG1DpWPgdg",
+            "uploader_url": "https://www.youtube.com/@TheTopGamerYT",
+            "creators": null,
+            "channel": "TheTopGameR",
+            "channel_id": "UCkkukl03ZasEzHG1DpWPgdg",
+            "uploader": "TheTopGameR",
+            "uploader_id": "@TheTopGamerYT",
+            "ie_key": "Youtube",
+            "id": "7wFTioXLw60",
+            "_type": "url",
+            "url": "https://music.youtube.com/watch?v=7wFTioXLw60",
+            "__x_forwarded_for_ip": null
+        }
+    ],
+    "extractor_key": "YoutubeTab",
+    "extractor": "youtube:tab",
+    "webpage_url": "https://www.youtube.com/playlist?list=PLYCXuVfDMlEU",
+    "original_url": "https://music.youtube.com/playlist?list=PLYCXuVfDMlEU",
+    "webpage_url_basename": "playlist",
+    "webpage_url_domain": "youtube.com",
+    "release_year": null,
+    "epoch": 1785774589,
+    "__files_to_move": {},
+    "_version": {
+        "version": "2026.07.04",
+        "current_git_head": null,
+        "release_git_head": "997fa140840a08df3938b40da470c78049fef1f6",
+        "repository": "yt-dlp/yt-dlp"
+    }
+}
